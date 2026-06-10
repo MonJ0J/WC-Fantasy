@@ -4,8 +4,15 @@ import { persist } from "zustand/middleware";
 interface UserState {
   playerId: string | null;
   displayName: string | null;
-  setIdentity: (playerId: string, displayName: string) => void;
+  /** Set when the player has attached a username+password. */
+  username: string | null;
+  setIdentity: (args: {
+    playerId: string;
+    displayName: string;
+    username?: string | null;
+  }) => void;
   updateName: (displayName: string) => void;
+  setUsername: (username: string | null) => void;
   clear: () => void;
 }
 
@@ -14,9 +21,12 @@ export const useUserStore = create<UserState>()(
     (set) => ({
       playerId: null,
       displayName: null,
-      setIdentity: (playerId, displayName) => set({ playerId, displayName }),
+      username: null,
+      setIdentity: ({ playerId, displayName, username }) =>
+        set({ playerId, displayName, username: username ?? null }),
       updateName: (displayName) => set({ displayName }),
-      clear: () => set({ playerId: null, displayName: null }),
+      setUsername: (username) => set({ username }),
+      clear: () => set({ playerId: null, displayName: null, username: null }),
     }),
     { name: "wc-fantasy-user" },
   ),
