@@ -72,6 +72,7 @@ export function GroupLayout() {
     { to: `/g/${group.invite_code}/bracket`, label: "Bracket" },
     { to: `/g/${group.invite_code}/leaderboard`, label: "Leaderboard" },
     { to: `/g/${group.invite_code}/members`, label: "Members" },
+    { to: `/how`, label: "How to play" },
   ];
 
   async function copyInvite() {
@@ -97,16 +98,13 @@ export function GroupLayout() {
             <button onClick={copyInvite} className="btn-secondary !py-2 text-xs">
               {copied ? "Copied!" : `Share · ${group.invite_code}`}
             </button>
-            <NavLink to="/how" className="btn-ghost !py-2 text-xs">
-              How to play
-            </NavLink>
             <NavLink to="/me" className="btn-ghost !py-2 text-xs">
               Me
             </NavLink>
           </div>
         </div>
-        <nav className="mx-auto flex max-w-3xl gap-1 overflow-x-auto px-4 pb-2 sm:px-4">
-          {tabs.map((t) => (
+        <nav className="mx-auto flex max-w-3xl items-center gap-1 overflow-x-auto px-4 pb-2 sm:px-4">
+          {tabs.slice(0, -1).map((t) => (
             <NavLink
               key={t.to}
               to={t.to}
@@ -123,6 +121,19 @@ export function GroupLayout() {
               {t.label}
             </NavLink>
           ))}
+          <NavLink
+            to="/how"
+            className={({ isActive }) =>
+              cx(
+                "ml-auto inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-semibold transition",
+                isActive
+                  ? "bg-amber-200 text-amber-900"
+                  : "bg-amber-50 text-amber-800 hover:bg-amber-100",
+              )
+            }
+          >
+            <span aria-hidden>❓</span> How to play
+          </NavLink>
         </nav>
       </header>
 

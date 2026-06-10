@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import { getAllMatches, getAllTeams, getMyMatchPredictions } from "../lib/api";
 import { supabase } from "../lib/supabase";
 import type { Match, MatchPrediction, Team } from "../lib/types";
@@ -134,6 +134,8 @@ export function Matches() {
 
   return (
     <div className="space-y-4">
+      <HowToPlayCallout />
+
       <div className="flex flex-wrap gap-2">
         {FILTERS.map((f) => (
           <button
@@ -209,6 +211,48 @@ export function Matches() {
           </section>
         ))
       )}
+    </div>
+  );
+}
+const CALLOUT_KEY = "wc-fantasy-howto-dismissed";
+
+function HowToPlayCallout() {
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(CALLOUT_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  if (dismissed) return null;
+  function dismiss() {
+    try {
+      localStorage.setItem(CALLOUT_KEY, "1");
+    } catch {
+      // ignore
+    }
+    setDismissed(true);
+  }
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      <div className="flex items-center gap-2">
+        <span aria-hidden className="text-base">❓</span>
+        <span>
+          New here? Read{" "}
+          <Link to="/how" className="font-bold underline">
+            How to play
+          </Link>{" "}
+          — scoring rules + outright bets in 30 seconds.
+        </span>
+      </div>
+      <button
+        type="button"
+        onClick={dismiss}
+        className="rounded-md px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100"
+        aria-label="Dismiss"
+      >
+        ✕
+      </button>
     </div>
   );
 }
