@@ -6,7 +6,7 @@ import { Matches } from "./routes/Matches";
 import { Leaderboard } from "./routes/Leaderboard";
 import { Members } from "./routes/Members";
 import { Bracket } from "./routes/Bracket";
-import { BracketBuilder } from "./routes/BracketBuilder";
+import { Outrights } from "./routes/Outrights";
 import { Admin } from "./routes/Admin";
 import { Me } from "./routes/Me";
 
@@ -19,10 +19,12 @@ export default function App() {
       <Route path="/admin" element={<Admin />} />
       <Route path="/g/:code" element={<GroupLayout />}>
         <Route index element={<Matches />} />
+        <Route path="outrights" element={<Outrights />} />
         <Route path="bracket" element={<Bracket />} />
-        <Route path="bracket/build" element={<BracketBuilder />} />
         <Route path="leaderboard" element={<Leaderboard />} />
         <Route path="members" element={<Members />} />
+        {/* Legacy redirect from the deprecated bracket builder. */}
+        <Route path="bracket/build" element={<Navigate to="../outrights" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

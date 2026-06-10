@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { submitMatchPrediction } from "../lib/api";
 import type { Match, MatchPrediction, PredictionOutcome, Team } from "../lib/types";
+import { isKnockout, STAGE_EXACT_BONUS, STAGE_OUTCOME_POINTS } from "../lib/scoring";
 import { isLocked, isStarted } from "../lib/timezone";
 import { cx } from "../lib/utils";
 import { Spinner } from "./Primitives";
@@ -30,6 +31,8 @@ export function PredictionWidget({
   existing,
   onSaved,
 }: Props) {
+  const ko = isKnockout(match.stage);
+  const options = ko ? OPTIONS.filter((o) => o.value !== "DRAW") : OPTIONS;
   const [outcome, setOutcome] = useState<PredictionOutcome | null>(
     existing?.predicted_outcome ?? null,
   );
@@ -57,11 +60,15 @@ export function PredictionWidget({
     const h = Number(home);
     const a = Number(away);
     if (Number.isNaN(h) || Number.isNaN(a)) return;
-    const derived: PredictionOutcome = h > a ? "HOME" : h < a ? "AWAY" : "DRAW";
-    setOutcome((cur) => (cur && cur !== derived && (h !== a) ? cur : derived));
-    // We only auto-set when scores indicate a non-draw; if user picked an outcome
-    // that contradicts a draw score, preserve the user's choice.
-  }, [home, away]);
+    if (h === a) {
+      // Equal scores: GROUP → derive DRAW; KO → don't touch (user must
+      // pick the PK winner explicitly).
+      if (!ko) setOutcome((cur) => (cur === "DRAW" ? cur : "DRAW"));
+      return;
+    }
+    const derived: PredictionOutcome = h > a ? "HOME" : "AWAY";
+    setOutcome((cur) => (cur && cur !== derived ? cur : derived));
+  }, [home, away, ko]);
 
   async function save(nextOutcome: PredictionOutcome | null) {
     if (locked) return;
@@ -110,8 +117,8 @@ export function PredictionWidget({
 
   return (
     <div className="mt-3 space-y-3 border-t border-slate-100 pt-3">
-      <div className="grid grid-cols-3 gap-2">
-        {OPTIONS.map((opt) => {
+      <div className={cx("grid gap-2", ko ? "grid-cols-2" : "grid-cols-3")}>
+        {options.map((opt) => {
           const active = outcome === opt.value;
           const label =
             opt.value === "HOME" ? homeName : opt.value === "AWAY" ? awayName : "Draw";
@@ -161,7 +168,12 @@ export function PredictionWidget({
 
       {error && <p className="text-xs text-red-600">{error}</p>}
       <p className="text-xs text-slate-500">
-        +3 pts for the right outcome, +2 bonus if your exact score also matches.
+        +{STAGE_OUTCOME_POINTS[match.stage]} pts for the right outcome
+        {STAGE_EXACT_BONUS[match.stage] > 0
+          ? `, +${STAGE_EXACT_BONUS[match.stage]} bonus if your exact score also matches`
+          : ""}
+        .
+        {ko && " Score is the result at the end of regulation; PK winners count as the outcome."}
       </p>
     </div>
   );

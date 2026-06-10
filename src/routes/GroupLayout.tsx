@@ -68,6 +68,7 @@ export function GroupLayout() {
 
   const tabs = [
     { to: `/g/${group.invite_code}`, label: "Matches", end: true },
+    { to: `/g/${group.invite_code}/outrights`, label: "Outrights" },
     { to: `/g/${group.invite_code}/bracket`, label: "Bracket" },
     { to: `/g/${group.invite_code}/leaderboard`, label: "Leaderboard" },
     { to: `/g/${group.invite_code}/members`, label: "Members" },

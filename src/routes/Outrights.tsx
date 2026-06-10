@@ -1,0 +1,299 @@
+import { useEffect, useMemo, useState } from "react";
+import { useOutletContext } from "react-router-dom";
+import {
+  deleteOutrightPrediction,
+  getAllMatches,
+  getAllTeams,
+  getMyOutrights,
+  submitOutrightPrediction,
+} from "../lib/api";
+import type { OutrightBetType, OutrightPrediction, Team } from "../lib/types";
+import { OUTRIGHT_POINTS } from "../lib/scoring";
+import { formatKickoff, isStarted } from "../lib/timezone";
+import { Spinner } from "../components/Primitives";
+import { cx } from "../lib/utils";
+import type { GroupContext } from "./GroupLayout";
+
+const GROUP_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"] as const;
+const SEMI_SLOTS = ["1", "2", "3", "4"] as const;
+
+export function Outrights() {
+  const { group, playerId } = useOutletContext<GroupContext>();
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [picks, setPicks] = useState<OutrightPrediction[]>([]);
+  const [lockAt, setLockAt] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const [t, ms, mine] = await Promise.all([
+        getAllTeams(),
+        getAllMatches(),
+        getMyOutrights(playerId, group.id).catch(() => [] as OutrightPrediction[]),
+      ]);
+      if (cancelled) return;
+      setTeams(t);
+      const m1 = ms.find((m) => m.id === 1);
+      setLockAt(m1?.kickoff_at ?? null);
+      setPicks(mine);
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [group.id, playerId]);
+
+  const teamsByGroup = useMemo(() => {
+    const map = new Map<string, Team[]>();
+    for (const t of teams) {
+      if (!t.group_letter) continue;
+      const list = map.get(t.group_letter) ?? [];
+      list.push(t);
+      map.set(t.group_letter, list);
+    }
+    return map;
+  }, [teams]);
+  const pot12 = useMemo(
+    () => teams.filter((t) => t.seed_position === 1 || t.seed_position === 2),
+    [teams],
+  );
+
+  const locked = lockAt ? isStarted(lockAt) : false;
+
+  function pickKey(betType: OutrightBetType, subkey: string | null): string {
+    return `${betType}:${subkey ?? ""}`;
+  }
+
+  function getPick(betType: OutrightBetType, subkey: string | null): string {
+    return (
+      picks.find(
+        (p) => p.bet_type === betType && (p.bet_subkey ?? "") === (subkey ?? ""),
+      )?.predicted_team_id ?? ""
+    );
+  }
+
+  async function save(
+    betType: OutrightBetType,
+    teamId: string,
+    subkey: string | null = null,
+  ) {
+    const key = pickKey(betType, subkey);
+    setSavingKey(key);
+    setError(null);
+
+    // Optimistic update.
+    const prev = picks;
+    const next = picks.filter(
+      (p) => !(p.bet_type === betType && (p.bet_subkey ?? "") === (subkey ?? "")),
+    );
+    if (teamId) next.push({ bet_type: betType, bet_subkey: subkey, predicted_team_id: teamId });
+    setPicks(next);
+
+    try {
+      if (teamId === "") {
+        await deleteOutrightPrediction({
+          playerId,
+          groupId: group.id,
+          betType,
+          betSubkey: subkey,
+        });
+      } else {
+        await submitOutrightPrediction({
+          playerId,
+          groupId: group.id,
+          betType,
+          teamId,
+          betSubkey: subkey,
+        });
+      }
+    } catch (e) {
+      setPicks(prev);
+      setError(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSavingKey(null);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-32 items-center justify-center">
+        <Spinner className="h-6 w-6 text-brand-600" />
+      </div>
+    );
+  }
+
+  const totalMax =
+    OUTRIGHT_POINTS.CHAMPION +
+    OUTRIGHT_POINTS.RUNNER_UP +
+    OUTRIGHT_POINTS.GROUP_WINNER * 12 +
+    OUTRIGHT_POINTS.SEMIFINALIST * 4 +
+    OUTRIGHT_POINTS.UNDERPERFORMER;
+
+  return (
+    <div className="space-y-5">
+      <div className="card flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold">Outright bets</h2>
+          <p className="text-xs text-slate-500">
+            Big-call picks worth up to <strong>{totalMax} pts</strong>. Lock together at first
+            kickoff ({lockAt ? formatKickoff(lockAt) : "TBD"}).
+          </p>
+        </div>
+        {locked && <span className="pill-locked">🔒 Locked</span>}
+      </div>
+
+      {error && <div className="card border-red-300 bg-red-50 text-sm text-red-700">{error}</div>}
+
+      <Section
+        title="🏆 Champion"
+        subtitle={`+${OUTRIGHT_POINTS.CHAMPION} pts · pick the World Cup winner.`}
+      >
+        <TeamPicker
+          value={getPick("CHAMPION", null)}
+          onChange={(v) => void save("CHAMPION", v)}
+          teams={teams}
+          disabled={locked || savingKey === pickKey("CHAMPION", null)}
+        />
+      </Section>
+
+      <Section
+        title="🥈 Runner-up"
+        subtitle={`+${OUTRIGHT_POINTS.RUNNER_UP} pts · pick the team that loses the final.`}
+      >
+        <TeamPicker
+          value={getPick("RUNNER_UP", null)}
+          onChange={(v) => void save("RUNNER_UP", v)}
+          teams={teams}
+          disabled={locked || savingKey === pickKey("RUNNER_UP", null)}
+        />
+      </Section>
+
+      <Section
+        title="🎯 Group Winners"
+        subtitle={`+${OUTRIGHT_POINTS.GROUP_WINNER} pts each · pick who tops each of the 12 groups.`}
+      >
+        <div className="grid gap-2 sm:grid-cols-2">
+          {GROUP_LETTERS.map((letter) => (
+            <div key={letter} className="flex items-center gap-2">
+              <span className="w-16 text-xs font-bold uppercase tracking-wider text-slate-500">
+                Group {letter}
+              </span>
+              <TeamPicker
+                value={getPick("GROUP_WINNER", letter)}
+                onChange={(v) => void save("GROUP_WINNER", v, letter)}
+                teams={teamsByGroup.get(letter) ?? []}
+                disabled={locked || savingKey === pickKey("GROUP_WINNER", letter)}
+              />
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section
+        title="⚔️ Semifinalists"
+        subtitle={`+${OUTRIGHT_POINTS.SEMIFINALIST} pts each · pick 4 teams that reach the semifinals. Partial credit.`}
+      >
+        <div className="grid gap-2 sm:grid-cols-2">
+          {SEMI_SLOTS.map((slot) => {
+            // Exclude already-picked teams from other slots.
+            const otherPicks = new Set(
+              picks
+                .filter((p) => p.bet_type === "SEMIFINALIST" && p.bet_subkey !== slot)
+                .map((p) => p.predicted_team_id),
+            );
+            return (
+              <div key={slot} className="flex items-center gap-2">
+                <span className="w-16 text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Slot {slot}
+                </span>
+                <TeamPicker
+                  value={getPick("SEMIFINALIST", slot)}
+                  onChange={(v) => void save("SEMIFINALIST", v, slot)}
+                  teams={teams.filter((t) => !otherPicks.has(t.id))}
+                  disabled={locked || savingKey === pickKey("SEMIFINALIST", slot)}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </Section>
+
+      <Section
+        title="💥 Underperformer"
+        subtitle={`+${OUTRIGHT_POINTS.UNDERPERFORMER} pts · pick a top-seed team (Pot 1 or 2) you think won't make it past the group stage.`}
+      >
+        <TeamPicker
+          value={getPick("UNDERPERFORMER", null)}
+          onChange={(v) => void save("UNDERPERFORMER", v)}
+          teams={pot12}
+          disabled={locked || savingKey === pickKey("UNDERPERFORMER", null)}
+        />
+        <p className="mt-1 text-[11px] text-slate-500">
+          Pot 1 = pre-draw seed 1 of each group · Pot 2 = seed 2. {pot12.length} teams eligible.
+        </p>
+      </Section>
+
+      {locked && (
+        <p className="pt-4 text-center text-xs text-slate-500">
+          Outrights are locked. Results score automatically as the tournament unfolds.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Section({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="card space-y-3">
+      <header>
+        <h3 className="text-sm font-semibold">{title}</h3>
+        <p className="text-xs text-slate-500">{subtitle}</p>
+      </header>
+      {children}
+    </section>
+  );
+}
+
+function TeamPicker({
+  value,
+  onChange,
+  teams,
+  disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  teams: Team[];
+  disabled: boolean;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+      className={cx("input !py-2 !text-sm", value && "border-brand-400 bg-brand-50")}
+    >
+      <option value="">— pick a team —</option>
+      {teams
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.flag_emoji} {t.name}
+            {t.group_letter ? ` (${t.group_letter})` : ""}
+          </option>
+        ))}
+    </select>
+  );
+}

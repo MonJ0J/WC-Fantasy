@@ -103,7 +103,7 @@ export function MatchCard({ match, teamById, playerId, groupId, existing, onSave
         </div>
       )}
 
-      {match.stage === "GROUP" && match.home_team_id && match.away_team_id && (
+      {match.home_team_id && match.away_team_id && (
         <PredictionWidget
           match={match}
           homeTeam={home}

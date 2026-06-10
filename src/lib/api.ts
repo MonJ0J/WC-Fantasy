@@ -1,11 +1,12 @@
 import { supabase } from "./supabase";
 import type {
-  BracketPrediction,
   GroupSession,
   LeaderboardRow,
   Match,
   MatchPrediction,
   MatchStatus,
+  OutrightBetType,
+  OutrightPrediction,
   Player,
   PredictionOutcome,
   PublicMatchPrediction,
@@ -115,11 +116,11 @@ export async function getMyMatchPredictions(
   });
 }
 
-export async function getMyBracket(
+export async function getMyOutrights(
   playerId: string,
   groupId: string,
-): Promise<BracketPrediction[]> {
-  return rpc<BracketPrediction[]>("get_my_bracket", {
+): Promise<OutrightPrediction[]> {
+  return rpc<OutrightPrediction[]>("get_my_outrights", {
     p_player_id: playerId,
     p_group_id: groupId,
   });
@@ -143,17 +144,33 @@ export async function submitMatchPrediction(args: {
   });
 }
 
-export async function submitBracketPrediction(args: {
+export async function submitOutrightPrediction(args: {
   playerId: string;
   groupId: string;
-  bracketSlot: number;
+  betType: OutrightBetType;
   teamId: string;
+  betSubkey?: string | null;
 }): Promise<void> {
-  await rpc<void>("submit_bracket_prediction", {
+  await rpc<void>("submit_outright_prediction", {
     p_player_id: args.playerId,
     p_group_id: args.groupId,
-    p_bracket_slot: args.bracketSlot,
+    p_bet_type: args.betType,
     p_team_id: args.teamId,
+    p_bet_subkey: args.betSubkey ?? null,
+  });
+}
+
+export async function deleteOutrightPrediction(args: {
+  playerId: string;
+  groupId: string;
+  betType: OutrightBetType;
+  betSubkey?: string | null;
+}): Promise<void> {
+  await rpc<void>("delete_outright_prediction", {
+    p_player_id: args.playerId,
+    p_group_id: args.groupId,
+    p_bet_type: args.betType,
+    p_bet_subkey: args.betSubkey ?? null,
   });
 }
 

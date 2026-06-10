@@ -51,7 +51,8 @@ export interface LeaderboardRow {
   total_points: number;
   correct_outcomes: number;
   exact_scores: number;
-  correct_bracket: number;
+  ko_correct: number;
+  outright_correct: number;
 }
 
 export interface MatchPrediction {
@@ -63,6 +64,19 @@ export interface MatchPrediction {
 
 export interface BracketPrediction {
   bracket_slot: number;
+  predicted_team_id: string;
+}
+
+export type OutrightBetType =
+  | "CHAMPION"
+  | "RUNNER_UP"
+  | "GROUP_WINNER"
+  | "SEMIFINALIST"
+  | "UNDERPERFORMER";
+
+export interface OutrightPrediction {
+  bet_type: OutrightBetType;
+  bet_subkey: string | null;
   predicted_team_id: string;
 }
 

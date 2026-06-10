@@ -4,8 +4,9 @@ A tiny **2026 FIFA World Cup prediction site** for groups of friends. Pick the w
 
 - **Stack:** React + Vite + TypeScript + Tailwind, [Supabase](https://supabase.com) (Postgres + RPCs), [Azure Static Web Apps](https://learn.microsoft.com/en-us/azure/static-web-apps/) for hosting.
 - **Auth:** No accounts. Pick a display name; identity persists in your browser's localStorage. Join a group with a short invite code (e.g. `WC-NEIGH7`).
-- **Scoring:** Group stage = 3 pts correct outcome + 2 pts bonus exact score. Knockout = 5 / 10 / 15 / 20 / 25 pts per correctly-picked advancing team in R32 / R16 / QF / SF / Final.
-- **Lock:** Group-stage match predictions lock 1 hour before kickoff. Bracket locks when the first R32 match kicks off (June 28, 2026).
+- **Per-match scoring:** Group stage = 3 pts outcome + 2 bonus exact score. Knockouts escalate: R32 5+3, R16 8+5, QF 12+8, SF 18+10, FINAL 25+15. Third-place 10.
+- **Outright bets (lock at first kickoff):** Champion +50, Runner-up +30, Group Winners +5 × 12, Semifinalists +10 × 4, Underperformer (Pot 1/2 only) +20. Max bonus ~205 pts.
+- **Lock:** Per-match predictions lock 1 hour before kickoff. Outright bets lock when the first match kicks off.
 
 ## Setup — first time
 
@@ -14,6 +15,7 @@ A tiny **2026 FIFA World Cup prediction site** for groups of friends. Pick the w
 1. Create a free project at <https://supabase.com>.
 2. Open the **SQL editor** in your Supabase dashboard and run, in order:
    - `supabase/migrations/0001_init.sql`
+   - `supabase/migrations/0002_per_match_and_outrights.sql`
    - `supabase/seed.sql`
 3. In **Project settings → API**, copy your **Project URL** and **anon public** key.
 4. **Important:** change the admin key. In the SQL editor:

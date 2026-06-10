@@ -40,7 +40,8 @@ export function Leaderboard() {
           total_points: 0,
           correct_outcomes: 0,
           exact_scores: 0,
-          correct_bracket: 0,
+          ko_correct: 0,
+          outright_correct: 0,
         },
     );
     return augmented.sort((a, b) => {
@@ -78,7 +79,8 @@ export function Leaderboard() {
             <th className="px-2 py-3 text-right">Pts</th>
             <th className="px-2 py-3 text-right">Outcomes</th>
             <th className="px-2 py-3 text-right">Exact</th>
-            <th className="px-2 py-3 text-right">Bracket</th>
+            <th className="px-2 py-3 text-right">KO</th>
+            <th className="px-2 py-3 text-right">Outright</th>
           </tr>
         </thead>
         <tbody>
@@ -105,7 +107,10 @@ export function Leaderboard() {
                   {r.exact_scores}
                 </td>
                 <td className="px-2 py-3 text-right tabular-nums text-slate-600">
-                  {r.correct_bracket}
+                  {r.ko_correct}
+                </td>
+                <td className="px-2 py-3 text-right tabular-nums text-slate-600">
+                  {r.outright_correct}
                 </td>
               </tr>
             );
