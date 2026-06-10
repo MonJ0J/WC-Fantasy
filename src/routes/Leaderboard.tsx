@@ -70,53 +70,82 @@ export function Leaderboard() {
   }
 
   return (
-    <div className="card overflow-hidden p-0">
-      <table className="w-full text-sm">
-        <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-          <tr>
-            <th className="px-4 py-3">#</th>
-            <th className="px-4 py-3">Player</th>
-            <th className="px-2 py-3 text-right">Pts</th>
-            <th className="px-2 py-3 text-right">Outcomes</th>
-            <th className="px-2 py-3 text-right">Exact</th>
-            <th className="px-2 py-3 text-right">KO</th>
-            <th className="px-2 py-3 text-right">Outright</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map((r, i) => {
-            const isMe = r.player_id === playerId;
-            return (
-              <tr
-                key={r.player_id}
-                className={cx(
-                  "border-t border-slate-100",
-                  isMe ? "bg-brand-50 font-semibold" : "hover:bg-slate-50",
-                )}
+    <div className="space-y-2">
+      <div className="card overflow-x-auto p-0">
+        <table className="w-full min-w-[520px] text-sm">
+          <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <tr>
+              <th className="px-4 py-3">#</th>
+              <th className="px-4 py-3">Player</th>
+              <th className="px-2 py-3 text-right" title="Total points">
+                Pts
+              </th>
+              <th
+                className="px-2 py-3 text-right"
+                title="Correct outcomes (win/draw/loss)"
               >
-                <td className="px-4 py-3 text-slate-500">{i + 1}</td>
-                <td className="px-4 py-3">
-                  {nameById.get(r.player_id) ?? "—"}
-                  {isMe && <span className="ml-1 text-xs text-brand-600">(you)</span>}
-                </td>
-                <td className="px-2 py-3 text-right tabular-nums font-bold">{r.total_points}</td>
-                <td className="px-2 py-3 text-right tabular-nums text-slate-600">
-                  {r.correct_outcomes}
-                </td>
-                <td className="px-2 py-3 text-right tabular-nums text-slate-600">
-                  {r.exact_scores}
-                </td>
-                <td className="px-2 py-3 text-right tabular-nums text-slate-600">
-                  {r.ko_correct}
-                </td>
-                <td className="px-2 py-3 text-right tabular-nums text-slate-600">
-                  {r.outright_correct}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                Outcomes
+              </th>
+              <th
+                className="px-2 py-3 text-right"
+                title="Exact score matches"
+              >
+                Exact
+              </th>
+              <th
+                className="px-2 py-3 text-right"
+                title="Correct knockout-round predictions (R32 → Final)"
+              >
+                Knockouts
+              </th>
+              <th
+                className="px-2 py-3 pr-4 text-right"
+                title="Correct outright bets (Champion, Runner-up, Group winners, Semifinalists, Underperformer)"
+              >
+                Outrights
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((r, i) => {
+              const isMe = r.player_id === playerId;
+              return (
+                <tr
+                  key={r.player_id}
+                  className={cx(
+                    "border-t border-slate-100",
+                    isMe ? "bg-brand-50 font-semibold" : "hover:bg-slate-50",
+                  )}
+                >
+                  <td className="px-4 py-3 text-slate-500">{i + 1}</td>
+                  <td className="px-4 py-3">
+                    {nameById.get(r.player_id) ?? "—"}
+                    {isMe && <span className="ml-1 text-xs text-brand-600">(you)</span>}
+                  </td>
+                  <td className="px-2 py-3 text-right tabular-nums font-bold">
+                    {r.total_points}
+                  </td>
+                  <td className="px-2 py-3 text-right tabular-nums text-slate-600">
+                    {r.correct_outcomes}
+                  </td>
+                  <td className="px-2 py-3 text-right tabular-nums text-slate-600">
+                    {r.exact_scores}
+                  </td>
+                  <td className="px-2 py-3 text-right tabular-nums text-slate-600">
+                    {r.ko_correct}
+                  </td>
+                  <td className="px-2 py-3 pr-4 text-right tabular-nums text-slate-600">
+                    {r.outright_correct}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="px-1 text-[11px] text-slate-500 sm:hidden">
+        Scroll the table sideways to see all columns.
+      </p>
     </div>
   );
 }
