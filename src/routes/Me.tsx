@@ -3,25 +3,31 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   createGroup,
   getGroupByCode,
+  getMyDashboard,
   joinGroup,
   renamePlayer,
+  type DashboardGroup,
 } from "../lib/api";
 import { useUserStore } from "../stores/userStore";
 import { Spinner } from "../components/Primitives";
 import { cx } from "../lib/utils";
+
+type Tab = "dashboard" | "create" | "join" | "settings";
 
 export function Me() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const { playerId, displayName, username, updateName, clear } = useUserStore();
 
-  const [tab, setTab] = useState<"create" | "join" | "settings">(
+  const initialTab: Tab =
     params.get("action") === "join"
       ? "join"
       : params.get("action") === "create"
         ? "create"
-        : "settings",
-  );
+        : params.get("action") === "settings"
+          ? "settings"
+          : "dashboard";
+  const [tab, setTab] = useState<Tab>(initialTab);
 
   useEffect(() => {
     if (!playerId) navigate("/", { replace: true });
@@ -29,14 +35,14 @@ export function Me() {
 
   if (!playerId) return null;
 
-  function switchTab(t: "create" | "join" | "settings") {
+  function switchTab(t: Tab) {
     setTab(t);
-    if (t === "settings") setParams({}, { replace: true });
+    if (t === "dashboard") setParams({}, { replace: true });
     else setParams({ action: t }, { replace: true });
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-4 p-4 pt-8">
+    <div className="mx-auto max-w-2xl space-y-4 p-4 pt-8">
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Your profile</h1>
@@ -50,16 +56,17 @@ export function Me() {
             )}
           </p>
         </div>
-        <Link to="/" className="btn-ghost !py-2 text-xs">
-          Home
+        <Link to="/how" className="btn-ghost !py-2 text-xs">
+          How to play
         </Link>
       </header>
 
       <div className="flex rounded-xl bg-slate-100 p-1">
         {(
           [
-            ["create", "Create group"],
-            ["join", "Join group"],
+            ["dashboard", "My groups"],
+            ["create", "Create"],
+            ["join", "Join"],
             ["settings", "Settings"],
           ] as const
         ).map(([key, label]) => (
@@ -77,6 +84,7 @@ export function Me() {
         ))}
       </div>
 
+      {tab === "dashboard" && <Dashboard playerId={playerId} onJoin={() => switchTab("join")} onCreate={() => switchTab("create")} />}
       {tab === "create" && <CreateGroup playerId={playerId} />}
       {tab === "join" && <JoinGroup playerId={playerId} />}
       {tab === "settings" && (
@@ -92,6 +100,90 @@ export function Me() {
           }}
         />
       )}
+    </div>
+  );
+}
+
+function Dashboard({
+  playerId,
+  onCreate,
+  onJoin,
+}: {
+  playerId: string;
+  onCreate: () => void;
+  onJoin: () => void;
+}) {
+  const [groups, setGroups] = useState<DashboardGroup[] | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const list = await getMyDashboard(playerId);
+        if (!cancelled) setGroups(list);
+      } catch {
+        if (!cancelled) setGroups([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [playerId]);
+
+  if (loading) {
+    return (
+      <div className="flex h-32 items-center justify-center">
+        <Spinner className="h-6 w-6 text-brand-600" />
+      </div>
+    );
+  }
+
+  if (!groups || groups.length === 0) {
+    return (
+      <div className="card space-y-3 text-center text-sm text-slate-600">
+        <p>You haven't joined any groups yet.</p>
+        <div className="flex flex-wrap justify-center gap-2">
+          <button onClick={onCreate} className="btn-primary !py-1.5 text-xs">
+            Create a group
+          </button>
+          <button onClick={onJoin} className="btn-secondary !py-1.5 text-xs">
+            Join with code
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {groups.map((g) => (
+        <Link
+          key={g.group_id}
+          to={`/g/${g.invite_code}`}
+          className="card flex items-center justify-between gap-3 transition hover:border-brand-300 hover:shadow-md"
+        >
+          <div>
+            <h3 className="text-base font-semibold">{g.group_name}</h3>
+            <p className="text-xs text-slate-500">
+              {g.member_count} member{g.member_count === 1 ? "" : "s"} ·{" "}
+              <span className="font-mono">{g.invite_code}</span>
+              {g.is_creator && (
+                <span className="ml-1 text-emerald-700">· creator</span>
+              )}
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold tabular-nums">{g.total_points}</div>
+            <div className="text-[11px] text-slate-500">
+              {g.my_rank > 0 ? `rank #${g.my_rank}` : "unranked"}
+            </div>
+          </div>
+        </Link>
+      ))}
     </div>
   );
 }
