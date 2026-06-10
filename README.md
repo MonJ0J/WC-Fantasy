@@ -16,6 +16,7 @@ A tiny **2026 FIFA World Cup prediction site** for groups of friends. Pick the w
 2. Open the **SQL editor** in your Supabase dashboard and run, in order:
    - `supabase/migrations/0001_init.sql`
    - `supabase/migrations/0002_per_match_and_outrights.sql`
+   - `supabase/migrations/0003_sync_infra.sql`
    - `supabase/seed.sql`
 3. In **Project settings → API**, copy your **Project URL** and **anon public** key.
 4. **Important:** change the admin key. In the SQL editor:
@@ -70,9 +71,39 @@ Two options:
 
 Open `/admin?key=YOUR_ADMIN_KEY` and type final scores. The leaderboard recomputes immediately.
 
-### B. Auto-sync (Phase 3 — optional)
+### B. Auto-sync (Phase 3 — deployed via Supabase Edge Function)
 
-Set up a Supabase Edge Function that calls [football-data.org](https://www.football-data.org)'s `/v4/competitions/WC/matches` every few minutes and calls the `set_match_result` RPC. The free tier covers the World Cup competition.
+The Edge Function at `supabase/functions/sync-wc-matches/index.ts` pulls scores from
+[football-data.org](https://www.football-data.org)'s free `WC` competition feed every 5 minutes via
+pg_cron, upserts them through the security-definer RPCs, and triggers `recalc_scores()` when a match
+finalizes.
+
+**One-time setup:**
+
+1. Sign up for a free [football-data.org](https://www.football-data.org/client/register) account.
+   Grab your **X-Auth-Token** from the dashboard.
+2. Install the [Supabase CLI](https://supabase.com/docs/guides/cli) (`brew install supabase/tap/supabase`)
+   and authenticate with `supabase login`.
+3. Link your project once: `supabase link --project-ref YOUR-PROJECT-REF`.
+4. Push the function and its secrets:
+   ```bash
+   supabase functions deploy sync-wc-matches --no-verify-jwt
+   supabase secrets set FOOTBALL_DATA_API_KEY=your-football-data-token
+   supabase secrets set ADMIN_KEY=same-value-as-app_settings.admin_key
+   ```
+5. Schedule the cron job (uncomment the block at the bottom of
+   `0003_sync_infra.sql`, fill in your project ref + service-role key, run it). The function will
+   then auto-run every 5 minutes.
+6. (Optional) Trigger a one-off run to verify:
+   ```bash
+   curl -X POST -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+        https://YOUR-REF.supabase.co/functions/v1/sync-wc-matches
+   ```
+   You should see a JSON response with `matchesSeen`, `matchesUpdated`, etc. The `/admin?key=...`
+   page also shows the latest sync status.
+
+The Matches tab subscribes to Supabase Realtime, so scores tick into every connected browser without
+a refresh.
 
 ## Repo tour
 
@@ -83,8 +114,9 @@ src/
   lib/            supabase client, api wrappers, scoring + timezone helpers
   stores/         Zustand store for the localStorage identity
 supabase/
-  migrations/     0001_init.sql — schema, RLS, RPCs, scoring function
+  migrations/     0001_init.sql, 0002_per_match_and_outrights.sql, 0003_sync_infra.sql
   seed.sql        48 teams + all 104 matches
+  functions/sync-wc-matches/   Edge Function: football-data.org → our matches table
 .github/workflows/azure-static-web-apps.yml
 staticwebapp.config.json  SPA fallback for Azure
 ```
@@ -95,10 +127,10 @@ staticwebapp.config.json  SPA fallback for Azure
 - The leaderboard is materialized into `leaderboard_cache` by the SQL `recalc_scores()` function, called from `set_match_result`. This is the single source of truth for points — the client mirrors the formula only for the instant feedback after a match finishes.
 - Predictions are revealed to other group members via the `match_predictions_public` view, which filters to matches whose kickoff has already passed.
 
-## What's still ahead (Phase 3)
+## What's still ahead
 
-- Supabase Edge Function + `pg_cron` job to auto-sync scores.
-- Supabase Realtime channel on `matches` updates so the UI ticks live without refresh.
-- Auto-populate KO team ids from the API once R32 matchups are known.
+- Push notifications when matches kick off / when your prediction scores.
+- Per-team brand colors on cards.
+- Group chat / reactions / comments.
 
 See `/memories/session/plan.md` for the full plan if you're contributing.

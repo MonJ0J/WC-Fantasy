@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { getAllMatches, getAllTeams, getMyMatchPredictions } from "../lib/api";
+import { supabase } from "../lib/supabase";
 import type { Match, MatchPrediction, Team } from "../lib/types";
 import { MatchCard } from "../components/MatchCard";
 import { EmptyState, Spinner } from "../components/Primitives";
@@ -49,6 +50,24 @@ export function Matches() {
       cancelled = true;
     };
   }, [group.id, playerId]);
+
+  // Realtime: push score / status / team-id updates to the UI without refresh.
+  useEffect(() => {
+    const channel = supabase
+      .channel("matches-live")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "matches" },
+        (payload) => {
+          const updated = payload.new as Match;
+          setMatches((cur) => cur.map((m) => (m.id === updated.id ? { ...m, ...updated } : m)));
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, []);
 
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const predByMatch = useMemo(

@@ -29,6 +29,62 @@ export async function renamePlayer(playerId: string, newName: string): Promise<v
   await rpc<void>("rename_player", { p_player_id: playerId, p_new_name: newName });
 }
 
+export interface AuthedIdentity {
+  player_id: string;
+  display_name: string;
+}
+
+export async function signUp(args: {
+  username: string;
+  password: string;
+  displayName: string;
+}): Promise<AuthedIdentity> {
+  const data = await rpc<AuthedIdentity[]>("sign_up", {
+    p_username: args.username,
+    p_password: args.password,
+    p_display_name: args.displayName,
+  });
+  return data[0];
+}
+
+export async function signIn(args: {
+  username: string;
+  password: string;
+}): Promise<AuthedIdentity> {
+  const data = await rpc<AuthedIdentity[]>("sign_in", {
+    p_username: args.username,
+    p_password: args.password,
+  });
+  return data[0];
+}
+
+export async function attachCredentials(args: {
+  playerId: string;
+  username: string;
+  password: string;
+}): Promise<void> {
+  await rpc<void>("attach_credentials", {
+    p_player_id: args.playerId,
+    p_username: args.username,
+    p_password: args.password,
+  });
+}
+
+export interface DashboardGroup {
+  group_id: string;
+  group_name: string;
+  invite_code: string;
+  is_creator: boolean;
+  joined_at: string;
+  member_count: number;
+  total_points: number;
+  my_rank: number;
+}
+
+export async function getMyDashboard(playerId: string): Promise<DashboardGroup[]> {
+  return rpc<DashboardGroup[]>("get_my_dashboard", { p_player_id: playerId });
+}
+
 // ---------- Groups ----------
 
 export async function createGroup(
@@ -224,4 +280,30 @@ export async function setMatchTeams(args: {
     p_home_team: args.homeTeam,
     p_away_team: args.awayTeam,
   });
+}
+
+// ---------- Sync log ----------
+
+export interface SyncLogRow {
+  id: string;
+  started_at: string;
+  finished_at: string | null;
+  source: string;
+  matches_seen: number;
+  matches_updated: number;
+  teams_resolved: number;
+  finalized_count: number;
+  status: "RUNNING" | "OK" | "ERROR";
+  error_message: string | null;
+}
+
+export async function getLastSync(): Promise<SyncLogRow | null> {
+  const { data, error } = await supabase
+    .from("sync_log")
+    .select("*")
+    .order("started_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data as SyncLogRow | null) ?? null;
 }

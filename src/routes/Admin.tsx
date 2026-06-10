@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { getAllMatches, getAllTeams, setMatchResult, setMatchTeams } from "../lib/api";
+import {
+  getAllMatches,
+  getAllTeams,
+  getLastSync,
+  setMatchResult,
+  setMatchTeams,
+  type SyncLogRow,
+} from "../lib/api";
 import type { Match, MatchStatus, Team } from "../lib/types";
 import { STAGE_LABEL } from "../lib/scoring";
 import { formatKickoff } from "../lib/timezone";
@@ -23,15 +30,21 @@ export function Admin() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastSync, setLastSync] = useState<SyncLogRow | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const [m, t] = await Promise.all([getAllMatches(), getAllTeams()]);
+      const [m, t, s] = await Promise.all([
+        getAllMatches(),
+        getAllTeams(),
+        getLastSync().catch(() => null),
+      ]);
       if (cancelled) return;
       setMatches(m);
       setTeams(t);
+      setLastSync(s);
       setLoading(false);
     })();
     return () => {
@@ -109,6 +122,8 @@ export function Admin() {
           Use this when the auto-sync is unavailable. Saving recomputes the leaderboard immediately.
         </p>
       </header>
+
+      <SyncStatusCard lastSync={lastSync} />
 
       {error && <div className="card border-red-300 bg-red-50 text-sm text-red-700">{error}</div>}
 
@@ -248,5 +263,40 @@ function TeamSelect({
         </option>
       ))}
     </select>
+  );
+}
+
+function SyncStatusCard({ lastSync }: { lastSync: SyncLogRow | null }) {
+  if (!lastSync) {
+    return (
+      <div className="card border-slate-200 bg-slate-50 text-sm text-slate-700">
+        <strong>Auto-sync:</strong> never run. Deploy the{" "}
+        <code className="rounded bg-slate-200 px-1 text-xs">sync-wc-matches</code> Edge Function and
+        wire up pg_cron — see the README.
+      </div>
+    );
+  }
+  const ageMs = Date.now() - new Date(lastSync.started_at).getTime();
+  const ageMin = Math.floor(ageMs / 60000);
+  const ageLabel = ageMin < 1 ? "just now" : ageMin < 60 ? `${ageMin}m ago` : `${Math.floor(ageMin / 60)}h ago`;
+  const tone =
+    lastSync.status === "OK"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+      : lastSync.status === "ERROR"
+        ? "border-red-200 bg-red-50 text-red-900"
+        : "border-amber-200 bg-amber-50 text-amber-900";
+  return (
+    <div className={cx("card text-sm", tone)}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <span>
+          <strong>Auto-sync:</strong> {lastSync.status} · {ageLabel}
+        </span>
+        <span className="text-xs">
+          {lastSync.matches_updated} updated · {lastSync.finalized_count} finalized ·{" "}
+          {lastSync.matches_seen} seen
+        </span>
+      </div>
+      {lastSync.error_message && <p className="mt-1 text-xs">{lastSync.error_message}</p>}
+    </div>
   );
 }
