@@ -9,12 +9,14 @@ import { Bracket } from "./routes/Bracket";
 import { Outrights } from "./routes/Outrights";
 import { Admin } from "./routes/Admin";
 import { Me } from "./routes/Me";
+import { HowToPlay } from "./routes/HowToPlay";
 
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/join" element={<Join />} />
+      <Route path="/how" element={<HowToPlay />} />
       <Route path="/me" element={<Me />} />
       <Route path="/admin" element={<Admin />} />
       <Route path="/g/:code" element={<GroupLayout />}>

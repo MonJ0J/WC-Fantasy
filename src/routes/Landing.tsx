@@ -185,7 +185,10 @@ function AuthView({
       </div>
 
       <p className="text-center text-xs text-slate-500">
-        No email needed. Your username + password let you sign in from any device.
+        No email needed. Your username + password let you sign in from any device.{" "}
+        <Link to="/how" className="font-semibold text-brand-700 hover:underline">
+          How to play
+        </Link>
       </p>
     </div>
   );
@@ -243,9 +246,14 @@ function SignedInHome({ playerId, displayName }: { playerId: string; displayName
           <p className="text-xs uppercase tracking-wider text-slate-500">Welcome back</p>
           <h1 className="text-2xl font-bold">{displayName}</h1>
         </div>
-        <Link to="/me" className="btn-ghost !py-2 text-xs">
-          Settings
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link to="/how" className="btn-ghost !py-2 text-xs">
+            How to play
+          </Link>
+          <Link to="/me" className="btn-ghost !py-2 text-xs">
+            Settings
+          </Link>
+        </div>
       </header>
 
       <div className="grid gap-2 sm:grid-cols-2">

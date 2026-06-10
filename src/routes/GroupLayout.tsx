@@ -97,6 +97,9 @@ export function GroupLayout() {
             <button onClick={copyInvite} className="btn-secondary !py-2 text-xs">
               {copied ? "Copied!" : `Share · ${group.invite_code}`}
             </button>
+            <NavLink to="/how" className="btn-ghost !py-2 text-xs">
+              How to play
+            </NavLink>
             <NavLink to="/me" className="btn-ghost !py-2 text-xs">
               Me
             </NavLink>
