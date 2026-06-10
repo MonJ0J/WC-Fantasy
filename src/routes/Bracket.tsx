@@ -64,8 +64,9 @@ export function Bracket() {
         <div>
           <h2 className="text-base font-semibold">Knockout bracket</h2>
           <p className="text-xs text-slate-500">
-            Pre-tournament bracket lock-in opens once the group stage seeds are confirmed. Coming
-            in Phase 2 of WC-Fantasy.
+            {koStarted
+              ? "Bracket locked. These are your picks vs the actual results."
+              : "Pick the team you think advances from every match, all the way to the Final. Locks when the first Round of 32 match kicks off (June 28)."}
           </p>
         </div>
         <Link to={`/g/${group.invite_code}/bracket/build`} className="btn-secondary !py-2 text-xs">
