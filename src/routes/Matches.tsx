@@ -3,6 +3,7 @@ import { Link, useOutletContext } from "react-router-dom";
 import { getAllMatches, getAllTeams, getMyMatchPredictions } from "../lib/api";
 import { supabase } from "../lib/supabase";
 import type { Match, MatchPrediction, Team } from "../lib/types";
+import { AutoFillModal } from "../components/AutoFillModal";
 import { MatchCard } from "../components/MatchCard";
 import { EmptyState, Spinner } from "../components/Primitives";
 import { dayKey, formatDay } from "../lib/timezone";
@@ -27,6 +28,7 @@ export function Matches() {
   const [filter, setFilter] = useState<Filter>("upcoming");
   const [groupFilter, setGroupFilter] = useState<string>("ALL");
   const [stageFilter, setStageFilter] = useState<"ALL" | "GROUP" | "KO">("GROUP");
+  const [autoFillOpen, setAutoFillOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -124,6 +126,14 @@ export function Matches() {
     });
   }
 
+  function handleAutoFilled(saved: MatchPrediction[]) {
+    setPredictions((cur) => {
+      const filledIds = new Set(saved.map((p) => p.match_id));
+      const kept = cur.filter((x) => !filledIds.has(x.match_id));
+      return [...kept, ...saved];
+    });
+  }
+
   if (loading) {
     return (
       <div className="flex h-32 items-center justify-center">
@@ -136,7 +146,7 @@ export function Matches() {
     <div className="space-y-4">
       <HowToPlayCallout />
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {FILTERS.map((f) => (
           <button
             key={f.key}
@@ -151,6 +161,13 @@ export function Matches() {
             {f.label}
           </button>
         ))}
+        <button
+          onClick={() => setAutoFillOpen(true)}
+          className="ml-auto inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-200"
+          title="Pick which teams advance and we fill in the rest"
+        >
+          🎲 Auto-fill picks
+        </button>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -211,6 +228,16 @@ export function Matches() {
           </section>
         ))
       )}
+
+      <AutoFillModal
+        open={autoFillOpen}
+        onClose={() => setAutoFillOpen(false)}
+        matches={matches}
+        teams={teams}
+        playerId={playerId}
+        groupId={group.id}
+        onComplete={handleAutoFilled}
+      />
     </div>
   );
 }
