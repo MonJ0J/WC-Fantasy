@@ -138,7 +138,7 @@ export function Outrights() {
       <div className="card flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold">Outright bets</h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Big-call picks worth up to <strong>{totalMax} pts</strong>. Lock together at first
             kickoff ({lockAt ? formatKickoff(lockAt) : "TBD"}).
           </p>
@@ -146,7 +146,7 @@ export function Outrights() {
         {locked && <span className="pill-locked">🔒 Locked</span>}
       </div>
 
-      {error && <div className="card border-red-300 bg-red-50 text-sm text-red-700">{error}</div>}
+      {error && <div className="card border-red-300 bg-red-50 text-sm text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300">{error}</div>}
 
       <Section
         title="🏆 Champion"
@@ -179,7 +179,7 @@ export function Outrights() {
         <div className="grid gap-2 sm:grid-cols-2">
           {GROUP_LETTERS.map((letter) => (
             <div key={letter} className="flex items-center gap-2">
-              <span className="w-16 text-xs font-bold uppercase tracking-wider text-slate-500">
+              <span className="w-16 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Group {letter}
               </span>
               <TeamPicker
@@ -207,7 +207,7 @@ export function Outrights() {
             );
             return (
               <div key={slot} className="flex items-center gap-2">
-                <span className="w-16 text-xs font-bold uppercase tracking-wider text-slate-500">
+                <span className="w-16 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Slot {slot}
                 </span>
                 <TeamPicker
@@ -232,13 +232,13 @@ export function Outrights() {
           teams={pot12}
           disabled={locked || savingKey === pickKey("UNDERPERFORMER", null)}
         />
-        <p className="mt-1 text-[11px] text-slate-500">
+        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
           Pot 1 = pre-draw seed 1 of each group · Pot 2 = seed 2. {pot12.length} teams eligible.
         </p>
       </Section>
 
       {locked && (
-        <p className="pt-4 text-center text-xs text-slate-500">
+        <p className="pt-4 text-center text-xs text-slate-500 dark:text-slate-400">
           Outrights are locked. Results score automatically as the tournament unfolds.
         </p>
       )}
@@ -259,7 +259,7 @@ function Section({
     <section className="card space-y-3">
       <header>
         <h3 className="text-sm font-semibold">{title}</h3>
-        <p className="text-xs text-slate-500">{subtitle}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>
       </header>
       {children}
     </section>
@@ -282,7 +282,7 @@ function TeamPicker({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
-      className={cx("input !py-2 !text-sm", value && "border-brand-400 bg-brand-50")}
+      className={cx("input !py-2 !text-sm", value && "border-brand-400 bg-brand-50 dark:bg-brand-500/15")}
     >
       <option value="">— pick a team —</option>
       {teams

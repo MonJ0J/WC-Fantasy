@@ -116,7 +116,7 @@ export function PredictionWidget({
   const awayName = awayTeam?.name ?? match.away_placeholder ?? "Away";
 
   return (
-    <div className="mt-3 space-y-3 border-t border-slate-100 pt-3">
+    <div className="mt-3 space-y-3 border-t border-slate-100 dark:border-slate-800 pt-3">
       <div className={cx("grid gap-2", ko ? "grid-cols-2" : "grid-cols-3")}>
         {options.map((opt) => {
           const active = outcome === opt.value;
@@ -134,11 +134,11 @@ export function PredictionWidget({
               className={cx(
                 "rounded-xl border px-2 py-2 text-xs font-semibold transition",
                 active
-                  ? "border-brand-500 bg-brand-50 text-brand-700 ring-2 ring-brand-300"
-                  : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+                  ? "border-brand-500 bg-brand-50 text-brand-700 ring-2 ring-brand-300 dark:bg-brand-500/15 dark:text-brand-300 dark:ring-brand-500/40"
+                  : "border-slate-200 bg-white text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700",
               )}
             >
-              <span className="block text-[10px] uppercase tracking-wider text-slate-500">
+              <span className="block text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 {opt.key}
               </span>
               <span className="line-clamp-1">{label}</span>
@@ -167,7 +167,7 @@ export function PredictionWidget({
       </div>
 
       {error && <p className="text-xs text-red-600">{error}</p>}
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-slate-500 dark:text-slate-400">
         +{STAGE_OUTCOME_POINTS[match.stage]} pts for the right outcome
         {STAGE_EXACT_BONUS[match.stage] > 0
           ? `, +${STAGE_EXACT_BONUS[match.stage]} bonus if your exact score also matches`
@@ -199,7 +199,7 @@ function ScoreInput({
         const v = e.target.value.replace(/[^0-9]/g, "").slice(0, 2);
         onChange(v);
       }}
-      className="h-9 w-12 rounded-lg border border-slate-300 bg-white text-center text-base font-semibold focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+      className="h-9 w-12 rounded-lg border border-slate-300 dark:border-slate-700 bg-white text-center text-base font-semibold focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 dark:bg-slate-800 dark:text-slate-100"
     />
   );
 }

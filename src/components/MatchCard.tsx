@@ -33,7 +33,7 @@ export function MatchCard({ match, teamById, playerId, groupId, existing, onSave
   return (
     <article className="card transition hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs text-slate-500">
+        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <span className="font-semibold">#{match.id}</span>
           <span>·</span>
           <span>{STAGE_LABEL[match.stage]}</span>
@@ -61,7 +61,7 @@ export function MatchCard({ match, teamById, playerId, groupId, existing, onSave
           ) : (
             <div className="text-xs font-medium uppercase tracking-wider text-slate-400">vs</div>
           )}
-          <div className="mt-1 text-[11px] text-slate-500">{formatKickoff(match.kickoff_at)}</div>
+          <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{formatKickoff(match.kickoff_at)}</div>
           <div className="text-[11px] text-slate-400">
             {finished
               ? match.venue
@@ -77,7 +77,7 @@ export function MatchCard({ match, teamById, playerId, groupId, existing, onSave
 
       {existing && (
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-          <span className="text-slate-500">Your pick:</span>
+          <span className="text-slate-500 dark:text-slate-400">Your pick:</span>
           <span className="font-medium">
             {existing.predicted_outcome === "HOME"
               ? `${homeLabel} win`
@@ -86,7 +86,7 @@ export function MatchCard({ match, teamById, playerId, groupId, existing, onSave
                 : "Draw"}
           </span>
           {existing.predicted_home_score != null && existing.predicted_away_score != null && (
-            <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-slate-700">
+            <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-slate-700 dark:bg-slate-800 dark:text-slate-300">
               {existing.predicted_home_score}–{existing.predicted_away_score}
             </span>
           )}
@@ -94,7 +94,7 @@ export function MatchCard({ match, teamById, playerId, groupId, existing, onSave
             <span
               className={cx(
                 "ml-auto rounded-md px-2 py-0.5 font-bold",
-                myPoints > 0 ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500",
+                myPoints > 0 ? "bg-emerald-100 text-emerald-700 dark:text-emerald-400 dark:bg-emerald-500/20" : "bg-slate-100 text-slate-500 dark:text-slate-400 dark:bg-slate-800",
               )}
             >
               {myPoints > 0 ? `+${myPoints} pts` : "0 pts"}
@@ -140,7 +140,7 @@ function TeamRow({
       <span
         className={cx(
           "line-clamp-2 text-sm font-semibold",
-          highlight ? "text-emerald-700" : "text-slate-900",
+          highlight ? "text-emerald-700 dark:text-emerald-400" : "text-slate-900 dark:text-slate-100",
         )}
       >
         {name}

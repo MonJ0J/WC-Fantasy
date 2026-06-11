@@ -150,21 +150,21 @@ export function AutoFillModal({
       aria-modal="true"
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:rounded-2xl"
+        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:rounded-2xl dark:bg-slate-900"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="border-b border-slate-200 px-4 py-3">
+        <header className="border-b border-slate-200 dark:border-slate-800 px-4 py-3">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-base font-bold">🎲 Auto-fill picks</h2>
-              <p className="mt-1 text-xs text-slate-600">
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
                 Tap the teams you think will advance from each group. We'll fill in your predictions
                 so those teams come out on top.
               </p>
             </div>
             <button
               onClick={onClose}
-              className="rounded-md p-1 text-xl leading-none text-slate-400 hover:bg-slate-100"
+              className="rounded-md p-1 text-xl leading-none text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
               aria-label="Close"
             >
               ✕
@@ -176,10 +176,10 @@ export function AutoFillModal({
           {GROUP_LETTERS.map((letter) => {
             const set = selected.get(letter);
             return (
-              <div key={letter} className="rounded-xl border border-slate-200 p-3">
+              <div key={letter} className="rounded-xl border border-slate-200 dark:border-slate-800 p-3">
                 <div className="mb-2 flex items-baseline justify-between">
                   <h3 className="text-sm font-bold">Group {letter}</h3>
-                  <span className="text-[11px] text-slate-500">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
                     {set?.size ?? 0} of 4 selected
                   </span>
                 </div>
@@ -194,8 +194,8 @@ export function AutoFillModal({
                         className={cx(
                           "flex items-center gap-2 rounded-lg border px-2 py-2 text-xs font-medium transition",
                           isSel
-                            ? "border-brand-500 bg-brand-50 text-brand-900 ring-1 ring-brand-300"
-                            : "border-slate-200 bg-white text-slate-700 hover:border-slate-300",
+                            ? "border-brand-500 bg-brand-50 text-brand-900 ring-1 ring-brand-300 dark:bg-brand-500/15 dark:text-brand-200 dark:ring-brand-500/40"
+                            : "border-slate-200 bg-white text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700",
                         )}
                       >
                         <span className="text-base leading-none">{t.flag_emoji}</span>
@@ -210,14 +210,14 @@ export function AutoFillModal({
           })}
 
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300">
               {error}
             </div>
           )}
         </div>
 
-        <footer className="flex items-center gap-2 border-t border-slate-200 bg-white px-4 py-3">
-          <span className="text-xs text-slate-500">
+        <footer className="flex items-center gap-2 border-t border-slate-200 dark:border-slate-800 bg-white px-4 py-3 dark:bg-slate-900">
+          <span className="text-xs text-slate-500 dark:text-slate-400">
             {totalSelected} team{totalSelected === 1 ? "" : "s"} selected
             {progress && ` · ${progress.done}/${progress.total} saved`}
           </span>

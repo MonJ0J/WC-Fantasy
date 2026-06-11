@@ -50,7 +50,7 @@ export function Bracket() {
     <div className="space-y-4">
       <div className="card">
         <h2 className="text-base font-semibold">Tournament bracket</h2>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           The live knockout tree. Predict each match individually from the{" "}
           <strong>Matches</strong> tab; this view fills in once teams qualify.
         </p>
@@ -61,7 +61,7 @@ export function Bracket() {
         if (items.length === 0) return null;
         return (
           <section key={round} className="space-y-2">
-            <h3 className="px-1 text-xs font-bold uppercase tracking-wider text-slate-500">
+            <h3 className="px-1 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               {STAGE_LABEL[round]}
             </h3>
             <div className="grid gap-2 sm:grid-cols-2">
@@ -96,7 +96,7 @@ function BracketRow({ match, teamById }: { match: Match; teamById: Map<string, T
 
   return (
     <article className="card !p-3">
-      <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-slate-500">
+      <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
         <span>#{match.id}</span>
         <span>{formatKickoff(match.kickoff_at)}</span>
       </div>
@@ -133,7 +133,7 @@ function TeamLine({
     <div
       className={cx(
         "flex items-center gap-2 rounded-md px-2 py-1.5",
-        isWinner && "bg-emerald-50",
+        isWinner && "bg-emerald-50 dark:bg-emerald-500/15",
       )}
     >
       <span className="text-lg">{team?.flag_emoji ?? "\u{1F3F3}\u{FE0F}"}</span>
