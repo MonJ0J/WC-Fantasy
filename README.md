@@ -1,5 +1,8 @@
 # WC-Fantasy ⚽🏆
 
+[![CI](https://github.com/MonJ0J/WC-Fantasy/actions/workflows/ci.yml/badge.svg)](https://github.com/MonJ0J/WC-Fantasy/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A tiny **2026 FIFA World Cup prediction site** for groups of friends. Pick the winner (and optional score) of every match, lock in your full knockout bracket before R32 kicks off, and watch the leaderboard rank you against your group.
 
 - **Stack:** React + Vite + TypeScript + Tailwind, [Supabase](https://supabase.com) (Postgres + RPCs), [Azure Static Web Apps](https://learn.microsoft.com/en-us/azure/static-web-apps/) for hosting.
@@ -133,4 +136,18 @@ staticwebapp.config.json  SPA fallback for Azure
 - Per-team brand colors on cards.
 - Group chat / reactions / comments.
 
-See `/memories/session/plan.md` for the full plan if you're contributing.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full PR workflow.
+
+## Contributing
+
+Pull requests welcome! See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the fork → branch → PR workflow. CI runs on every PR; all merges into `main` require:
+
+- A green CI build (`npm run build` passes)
+- Maintainer review + approval
+
+For security disclosures, see [`SECURITY.md`](SECURITY.md).
+
+## License
+
+[MIT](LICENSE) © 2026 Juan Esteban Junco
+
