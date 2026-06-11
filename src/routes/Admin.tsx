@@ -100,7 +100,7 @@ export function Admin() {
   if (!adminKey) {
     return (
       <div className="mx-auto max-w-md p-6">
-        <div className="card border-amber-300 bg-amber-50 text-sm text-amber-900">
+        <div className="card border-amber-300 bg-amber-50 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
           Admin key required. Append <code>?key=YOUR-KEY</code> to the URL.
         </div>
       </div>
@@ -118,14 +118,14 @@ export function Admin() {
     <div className="mx-auto max-w-3xl space-y-4 p-4 pb-24 pt-6">
       <header>
         <h1 className="text-2xl font-bold">Admin · Results entry</h1>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           Use this when the auto-sync is unavailable. Saving recomputes the leaderboard immediately.
         </p>
       </header>
 
       <SyncStatusCard lastSync={lastSync} />
 
-      {error && <div className="card border-red-300 bg-red-50 text-sm text-red-700">{error}</div>}
+      {error && <div className="card border-red-300 bg-red-50 text-sm text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300">{error}</div>}
 
       <div className="space-y-3">
         {matches.map((m) => (
@@ -168,7 +168,7 @@ function AdminMatchCard({
 
   return (
     <article className="card">
-      <div className="flex items-center justify-between text-xs text-slate-500">
+      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
         <span>
           #{match.id} · {STAGE_LABEL[match.stage]}
           {match.group_letter && ` · Group ${match.group_letter}`}
@@ -189,8 +189,8 @@ function AdminMatchCard({
       </div>
 
       {needsTeams && (
-        <div className="mt-3 space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs">
-          <div className="font-semibold text-amber-800">Assign teams (KO only)</div>
+        <div className="mt-3 space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs dark:border-amber-500/40 dark:bg-amber-500/10">
+          <div className="font-semibold text-amber-800 dark:text-amber-300">Assign teams (KO only)</div>
           <div className="grid grid-cols-2 gap-2">
             <TeamSelect value={homeTeam} onChange={setHomeTeam} teams={allTeams} />
             <TeamSelect value={awayTeam} onChange={setAwayTeam} teams={allTeams} />
@@ -208,7 +208,7 @@ function AdminMatchCard({
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <input
           aria-label="home score"
-          className={cx("h-9 w-14 rounded-lg border border-slate-300 text-center font-bold")}
+          className={cx("h-9 w-14 rounded-lg border border-slate-300 dark:border-slate-700 text-center font-bold")}
           inputMode="numeric"
           value={home}
           onChange={(e) => setHome(e.target.value.replace(/\D/g, "").slice(0, 2))}
@@ -216,7 +216,7 @@ function AdminMatchCard({
         <span className="text-slate-400">–</span>
         <input
           aria-label="away score"
-          className={cx("h-9 w-14 rounded-lg border border-slate-300 text-center font-bold")}
+          className={cx("h-9 w-14 rounded-lg border border-slate-300 dark:border-slate-700 text-center font-bold")}
           inputMode="numeric"
           value={away}
           onChange={(e) => setAway(e.target.value.replace(/\D/g, "").slice(0, 2))}
@@ -237,7 +237,7 @@ function AdminMatchCard({
           Mark live
         </button>
 
-        <span className="ml-auto text-xs text-slate-500">
+        <span className="ml-auto text-xs text-slate-500 dark:text-slate-400">
           Status: <strong>{match.status}</strong>
         </span>
       </div>
@@ -269,9 +269,9 @@ function TeamSelect({
 function SyncStatusCard({ lastSync }: { lastSync: SyncLogRow | null }) {
   if (!lastSync) {
     return (
-      <div className="card border-slate-200 bg-slate-50 text-sm text-slate-700">
+      <div className="card border-slate-200 dark:border-slate-800 bg-slate-50 text-sm text-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
         <strong>Auto-sync:</strong> never run. Deploy the{" "}
-        <code className="rounded bg-slate-200 px-1 text-xs">sync-wc-matches</code> Edge Function and
+        <code className="rounded bg-slate-200 px-1 text-xs dark:bg-slate-700">sync-wc-matches</code> Edge Function and
         wire up pg_cron — see the README.
       </div>
     );
@@ -281,10 +281,10 @@ function SyncStatusCard({ lastSync }: { lastSync: SyncLogRow | null }) {
   const ageLabel = ageMin < 1 ? "just now" : ageMin < 60 ? `${ageMin}m ago` : `${Math.floor(ageMin / 60)}h ago`;
   const tone =
     lastSync.status === "OK"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-200"
       : lastSync.status === "ERROR"
-        ? "border-red-200 bg-red-50 text-red-900"
-        : "border-amber-200 bg-amber-50 text-amber-900";
+        ? "border-red-200 bg-red-50 text-red-900 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200"
+        : "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200";
   return (
     <div className={cx("card text-sm", tone)}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">

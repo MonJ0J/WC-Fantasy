@@ -73,7 +73,7 @@ export function Leaderboard() {
     <div className="space-y-2">
       <div className="card overflow-x-auto p-0">
         <table className="w-full min-w-[520px] text-sm">
-          <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+          <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
             <tr>
               <th className="px-4 py-3">#</th>
               <th className="px-4 py-3">Player</th>
@@ -113,11 +113,11 @@ export function Leaderboard() {
                 <tr
                   key={r.player_id}
                   className={cx(
-                    "border-t border-slate-100",
-                    isMe ? "bg-brand-50 font-semibold" : "hover:bg-slate-50",
+                    "border-t border-slate-100 dark:border-slate-800",
+                    isMe ? "bg-brand-50 font-semibold dark:bg-brand-500/15" : "hover:bg-slate-50 dark:hover:bg-slate-800/50",
                   )}
                 >
-                  <td className="px-4 py-3 text-slate-500">{i + 1}</td>
+                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{i + 1}</td>
                   <td className="px-4 py-3">
                     {nameById.get(r.player_id) ?? "—"}
                     {isMe && <span className="ml-1 text-xs text-brand-600">(you)</span>}
@@ -125,16 +125,16 @@ export function Leaderboard() {
                   <td className="px-2 py-3 text-right tabular-nums font-bold">
                     {r.total_points}
                   </td>
-                  <td className="px-2 py-3 text-right tabular-nums text-slate-600">
+                  <td className="px-2 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
                     {r.correct_outcomes}
                   </td>
-                  <td className="px-2 py-3 text-right tabular-nums text-slate-600">
+                  <td className="px-2 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
                     {r.exact_scores}
                   </td>
-                  <td className="px-2 py-3 text-right tabular-nums text-slate-600">
+                  <td className="px-2 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
                     {r.ko_correct}
                   </td>
-                  <td className="px-2 py-3 pr-4 text-right tabular-nums text-slate-600">
+                  <td className="px-2 py-3 pr-4 text-right tabular-nums text-slate-600 dark:text-slate-300">
                     {r.outright_correct}
                   </td>
                 </tr>
@@ -143,7 +143,7 @@ export function Leaderboard() {
           </tbody>
         </table>
       </div>
-      <p className="px-1 text-[11px] text-slate-500 sm:hidden">
+      <p className="px-1 text-[11px] text-slate-500 dark:text-slate-400 sm:hidden">
         Scroll the table sideways to see all columns.
       </p>
     </div>

@@ -83,31 +83,31 @@ function AuthView({
       <header className="space-y-2 text-center">
         <div className="text-5xl">🏆</div>
         <h1 className="text-3xl font-bold tracking-tight">WC-Fantasy</h1>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-slate-600 dark:text-slate-300">
           Predict every 2026 World Cup match with your friends.
         </p>
         {pendingCode && (
-          <p className="rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-700">
+          <p className="rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
             You're joining group <strong>{pendingCode}</strong>. Sign in or create an account first.
           </p>
         )}
       </header>
 
       {!isConfigured && (
-        <div className="card border-amber-300 bg-amber-50 text-sm text-amber-900">
+        <div className="card border-amber-300 bg-amber-50 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
           <strong>Setup needed:</strong> add <code>VITE_SUPABASE_URL</code> and{" "}
           <code>VITE_SUPABASE_ANON_KEY</code>.
         </div>
       )}
 
       <div className="card space-y-4">
-        <div className="flex rounded-xl bg-slate-100 p-1">
+        <div className="flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
           <button
             type="button"
             onClick={() => setMode("signin")}
             className={cx(
               "flex-1 rounded-lg px-3 py-1.5 text-sm font-semibold transition",
-              mode === "signin" ? "bg-white text-slate-900 shadow" : "text-slate-600",
+              mode === "signin" ? "bg-white text-slate-900 shadow dark:bg-slate-700 dark:text-white" : "text-slate-600 dark:text-slate-400",
             )}
           >
             Sign in
@@ -117,7 +117,7 @@ function AuthView({
             onClick={() => setMode("signup")}
             className={cx(
               "flex-1 rounded-lg px-3 py-1.5 text-sm font-semibold transition",
-              mode === "signup" ? "bg-white text-slate-900 shadow" : "text-slate-600",
+              mode === "signup" ? "bg-white text-slate-900 shadow dark:bg-slate-700 dark:text-white" : "text-slate-600 dark:text-slate-400",
             )}
           >
             Create account
@@ -165,18 +165,18 @@ function AuthView({
             </Field>
           )}
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
           <button type="submit" disabled={loading} className="btn-primary w-full">
             {loading ? <Spinner /> : mode === "signup" ? "Create account" : "Sign in"}
           </button>
         </form>
 
-        <p className="text-center text-xs text-slate-500">
+        <p className="text-center text-xs text-slate-500 dark:text-slate-400">
           {mode === "signup" ? "Already have an account? " : "First time here? "}
           <button
             type="button"
-            className="font-semibold text-brand-700 hover:underline"
+            className="font-semibold text-brand-700 hover:underline dark:text-brand-300"
             onClick={() => setMode((m) => (m === "signup" ? "signin" : "signup"))}
           >
             {mode === "signup" ? "Sign in" : "Create one"}
@@ -184,9 +184,9 @@ function AuthView({
         </p>
       </div>
 
-      <p className="text-center text-xs text-slate-500">
+      <p className="text-center text-xs text-slate-500 dark:text-slate-400">
         No email needed. Your username + password let you sign in from any device.{" "}
-        <Link to="/how" className="font-semibold text-brand-700 hover:underline">
+        <Link to="/how" className="font-semibold text-brand-700 hover:underline dark:text-brand-300">
           How to play
         </Link>
       </p>
@@ -205,11 +205,11 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+      <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
         {label}
       </span>
       {children}
-      {hint && <span className="mt-1 block text-[11px] text-slate-500">{hint}</span>}
+      {hint && <span className="mt-1 block text-[11px] text-slate-500 dark:text-slate-400">{hint}</span>}
     </label>
   );
 }
@@ -243,7 +243,7 @@ function SignedInHome({ playerId, displayName }: { playerId: string; displayName
     <div className="mx-auto max-w-2xl space-y-6 p-4 pb-24 pt-8">
       <header className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-wider text-slate-500">Welcome back</p>
+          <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Welcome back</p>
           <h1 className="text-2xl font-bold">{displayName}</h1>
         </div>
         <div className="flex items-center gap-2">
@@ -266,7 +266,7 @@ function SignedInHome({ playerId, displayName }: { playerId: string; displayName
       </div>
 
       <section className="space-y-3">
-        <h2 className="px-1 text-sm font-bold uppercase tracking-wider text-slate-500">
+        <h2 className="px-1 text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           Your groups
         </h2>
         {loading ? (
@@ -274,7 +274,7 @@ function SignedInHome({ playerId, displayName }: { playerId: string; displayName
             <Spinner className="h-6 w-6 text-brand-600" />
           </div>
         ) : !groups || groups.length === 0 ? (
-          <div className="card text-center text-sm text-slate-600">
+          <div className="card text-center text-sm text-slate-600 dark:text-slate-300">
             <p>You're not in any groups yet.</p>
             <p className="mt-1 text-xs">Use the buttons above to create one or join with a code.</p>
           </div>
@@ -288,17 +288,17 @@ function SignedInHome({ playerId, displayName }: { playerId: string; displayName
               >
                 <div>
                   <h3 className="text-base font-semibold">{g.group_name}</h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {g.member_count} member{g.member_count === 1 ? "" : "s"} ·{" "}
                     <span className="font-mono">{g.invite_code}</span>
                     {g.is_creator && (
-                      <span className="ml-1 text-emerald-700">· creator</span>
+                      <span className="ml-1 text-emerald-700 dark:text-emerald-400">· creator</span>
                     )}
                   </p>
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold tabular-nums">{g.total_points}</div>
-                  <div className="text-[11px] text-slate-500">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
                     {g.my_rank > 0 ? `rank #${g.my_rank}` : "unranked"}
                   </div>
                 </div>

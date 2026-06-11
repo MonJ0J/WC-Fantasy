@@ -86,11 +86,11 @@ export function GroupLayout() {
 
   return (
     <div className="min-h-screen pb-24">
-      <header className="border-b border-slate-200 bg-white">
+      <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="mx-auto flex max-w-3xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-xl font-bold">{group.name}</h1>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Signed in as <strong>{displayName}</strong>
             </p>
           </div>
@@ -113,8 +113,8 @@ export function GroupLayout() {
                 cx(
                   "rounded-lg px-3 py-1.5 text-sm font-medium transition",
                   isActive
-                    ? "bg-brand-100 text-brand-700"
-                    : "text-slate-600 hover:bg-slate-100",
+                    ? "bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-300"
+                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800",
                 )
               }
             >
@@ -127,8 +127,8 @@ export function GroupLayout() {
               cx(
                 "ml-auto inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-semibold transition",
                 isActive
-                  ? "bg-amber-200 text-amber-900"
-                  : "bg-amber-50 text-amber-800 hover:bg-amber-100",
+                  ? "bg-amber-200 text-amber-900 dark:bg-amber-500/30 dark:text-amber-200"
+                  : "bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/20",
               )
             }
           >

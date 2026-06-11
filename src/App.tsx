@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { Landing } from "./routes/Landing";
-import { Join } from "./routes/Join";
+import { Landing } from "./routes/Landing";import { Join } from "./routes/Join";
 import { GroupLayout } from "./routes/GroupLayout";
 import { Matches } from "./routes/Matches";
 import { Leaderboard } from "./routes/Leaderboard";
@@ -10,10 +9,13 @@ import { Outrights } from "./routes/Outrights";
 import { Admin } from "./routes/Admin";
 import { Me } from "./routes/Me";
 import { HowToPlay } from "./routes/HowToPlay";
+import { ThemeToggle } from "./components/ThemeToggle";
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <ThemeToggle />
+      <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/join" element={<Join />} />
       <Route path="/how" element={<HowToPlay />} />
@@ -29,6 +31,7 @@ export default function App() {
         <Route path="bracket/build" element={<Navigate to="../outrights" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </>
   );
 }

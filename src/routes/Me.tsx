@@ -46,7 +46,7 @@ export function Me() {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Your profile</h1>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             {username ? (
               <>
                 Signed in as <span className="font-mono">@{username}</span>
@@ -61,7 +61,7 @@ export function Me() {
         </Link>
       </header>
 
-      <div className="flex rounded-xl bg-slate-100 p-1">
+      <div className="flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
         {(
           [
             ["dashboard", "My groups"],
@@ -76,7 +76,7 @@ export function Me() {
             onClick={() => switchTab(key)}
             className={cx(
               "flex-1 rounded-lg px-2 py-1.5 text-xs font-semibold transition",
-              tab === key ? "bg-white text-slate-900 shadow" : "text-slate-600",
+              tab === key ? "bg-white text-slate-900 shadow dark:bg-slate-700 dark:text-white" : "text-slate-600 dark:text-slate-300",
             )}
           >
             {label}
@@ -144,7 +144,7 @@ function Dashboard({
 
   if (!groups || groups.length === 0) {
     return (
-      <div className="card space-y-3 text-center text-sm text-slate-600">
+      <div className="card space-y-3 text-center text-sm text-slate-600 dark:text-slate-300">
         <p>You haven't joined any groups yet.</p>
         <div className="flex flex-wrap justify-center gap-2">
           <button onClick={onCreate} className="btn-primary !py-1.5 text-xs">
@@ -168,17 +168,17 @@ function Dashboard({
         >
           <div>
             <h3 className="text-base font-semibold">{g.group_name}</h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               {g.member_count} member{g.member_count === 1 ? "" : "s"} ·{" "}
               <span className="font-mono">{g.invite_code}</span>
               {g.is_creator && (
-                <span className="ml-1 text-emerald-700">· creator</span>
+                <span className="ml-1 text-emerald-700 dark:text-emerald-400">· creator</span>
               )}
             </p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold tabular-nums">{g.total_points}</div>
-            <div className="text-[11px] text-slate-500">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">
               {g.my_rank > 0 ? `rank #${g.my_rank}` : "unranked"}
             </div>
           </div>
@@ -214,7 +214,7 @@ function CreateGroup({ playerId }: { playerId: string }) {
   return (
     <form onSubmit={submit} className="card space-y-3">
       <label className="block">
-        <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           Group name
         </span>
         <input
@@ -259,7 +259,7 @@ function JoinGroup({ playerId }: { playerId: string }) {
   return (
     <form onSubmit={submit} className="card space-y-3">
       <label className="block">
-        <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           Invite code
         </span>
         <input
@@ -310,7 +310,7 @@ function Settings({
     <div className="space-y-4">
       <form onSubmit={submit} className="card space-y-3">
         <label className="block">
-          <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Display name
           </span>
           <input
@@ -319,19 +319,19 @@ function Settings({
             maxLength={30}
             onChange={(e) => setName(e.target.value)}
           />
-          <span className="mt-1 block text-[11px] text-slate-500">
+          <span className="mt-1 block text-[11px] text-slate-500 dark:text-slate-400">
             What others see on leaderboards. Your login username never changes.
           </span>
         </label>
         <button type="submit" className="btn-primary w-full" disabled={saving}>
           {saving ? <Spinner /> : "Save name"}
         </button>
-        {msg && <p className="text-xs text-emerald-700">{msg}</p>}
+        {msg && <p className="text-xs text-emerald-700 dark:text-emerald-400">{msg}</p>}
       </form>
 
       <div className="card">
-        <h2 className="text-sm font-semibold text-slate-700">Sign out</h2>
-        <p className="mt-1 text-xs text-slate-600">
+        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Sign out</h2>
+        <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
           Forgets your identity on this device. You can sign back in any time with your username
           and password.
         </p>

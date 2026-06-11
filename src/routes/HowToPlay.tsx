@@ -6,7 +6,7 @@ export function HowToPlay() {
       <header className="space-y-2 text-center">
         <div className="text-5xl">⚽</div>
         <h1 className="text-3xl font-bold tracking-tight">How to play</h1>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-slate-600 dark:text-slate-300">
           Predict every match. Pick the bold calls. Climb the leaderboard.
         </p>
       </header>
@@ -34,9 +34,9 @@ export function HowToPlay() {
           <PointPill label="Semifinals" outcome={18} bonus={10} />
           <PointPill label="Final" outcome={25} bonus={15} />
         </Grid>
-        <p className="mt-3 text-xs text-slate-600">
-          <span className="font-semibold text-slate-900">+outcome</span> for the right winner.{" "}
-          <span className="font-semibold text-emerald-700">+bonus</span> extra if your exact score also
+        <p className="mt-3 text-xs text-slate-600 dark:text-slate-300">
+          <span className="font-semibold text-slate-900 dark:text-slate-100">+outcome</span> for the right winner.{" "}
+          <span className="font-semibold text-emerald-700 dark:text-emerald-400">+bonus</span> extra if your exact score also
           matches. Knockout draws aren't a thing — pick a winner.
         </p>
       </Section>
@@ -71,7 +71,7 @@ export function HowToPlay() {
           <LockRow when="1 hour before kickoff" what="Each individual match prediction" />
           <LockRow when="First match (June 11, noon)" what="All 5 outright bets" />
         </div>
-        <p className="mt-3 text-xs text-slate-600">
+        <p className="mt-3 text-xs text-slate-600 dark:text-slate-300">
           Predictions autosave the moment you tap. You can change them up until the lock time.
         </p>
       </Section>
@@ -106,8 +106,8 @@ export function HowToPlay() {
         </ul>
       </Section>
 
-      <div className="card flex flex-wrap items-center justify-between gap-3 bg-brand-50">
-        <p className="text-sm font-semibold text-brand-900">Ready to play?</p>
+      <div className="card flex flex-wrap items-center justify-between gap-3 bg-brand-50 dark:bg-brand-500/10">
+        <p className="text-sm font-semibold text-brand-900 dark:text-brand-200">Ready to play?</p>
         <Link to="/" className="btn-primary !py-2 text-xs">
           Go to my groups
         </Link>
@@ -125,7 +125,7 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
         {n}
       </div>
       <h3 className="text-sm font-semibold">{title}</h3>
-      <p className="text-xs text-slate-600">{children}</p>
+      <p className="text-xs text-slate-600 dark:text-slate-300">{children}</p>
     </div>
   );
 }
@@ -143,7 +143,7 @@ function Section({
     <section className="card space-y-3">
       <header>
         <h2 className="text-base font-semibold">{title}</h2>
-        {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
+        {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>}
       </header>
       {children}
     </section>
@@ -156,8 +156,8 @@ function Grid({ children }: { children: React.ReactNode }) {
 
 function PointPill({ label, outcome, bonus }: { label: string; outcome: number; bonus: number }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{label}</div>
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 px-3 py-2 text-center dark:bg-slate-800/50">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</div>
       <div className="mt-0.5 text-sm font-bold">
         +{outcome} <span className="text-emerald-600">+{bonus}</span>
       </div>
@@ -182,11 +182,11 @@ function Outright({
       <div className="flex-1">
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-sm font-semibold">{name}</span>
-          <span className="rounded-md bg-brand-50 px-2 py-0.5 text-[11px] font-bold text-brand-700">
+          <span className="rounded-md bg-brand-50 px-2 py-0.5 text-[11px] font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">
             {pts}
           </span>
         </div>
-        <p className="text-xs text-slate-600">{children}</p>
+        <p className="text-xs text-slate-600 dark:text-slate-300">{children}</p>
       </div>
     </li>
   );
@@ -194,9 +194,9 @@ function Outright({
 
 function LockRow({ when, what }: { when: string; what: string }) {
   return (
-    <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-800">{when}</div>
-      <div className="mt-0.5 text-sm font-medium text-amber-900">{what}</div>
+    <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-500/40 dark:bg-amber-500/10">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-800 dark:text-amber-300">{when}</div>
+      <div className="mt-0.5 text-sm font-medium text-amber-900 dark:text-amber-200">{what}</div>
     </div>
   );
 }
@@ -204,10 +204,10 @@ function LockRow({ when, what }: { when: string; what: string }) {
 function TimelineRow({ date, text }: { date: string; text: string }) {
   return (
     <li className="flex gap-3">
-      <span className="w-24 shrink-0 text-xs font-bold uppercase tracking-wider text-slate-500">
+      <span className="w-24 shrink-0 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
         {date}
       </span>
-      <span className="text-slate-700">{text}</span>
+      <span className="text-slate-700 dark:text-slate-300">{text}</span>
     </li>
   );
 }
@@ -216,7 +216,7 @@ function Tip({ children }: { children: React.ReactNode }) {
   return (
     <li className="flex gap-2">
       <span className="mt-0.5 text-emerald-600">✓</span>
-      <span className="flex-1 text-slate-700">{children}</span>
+      <span className="flex-1 text-slate-700 dark:text-slate-300">{children}</span>
     </li>
   );
 }

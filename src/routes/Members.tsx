@@ -36,23 +36,23 @@ export function Members() {
   return (
     <div className="space-y-4">
       <div className="card">
-        <h2 className="text-sm font-semibold text-slate-700">Invite friends</h2>
-        <p className="mt-1 text-sm text-slate-600">
+        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Invite friends</h2>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
           Share this code or link — anyone who has it can join.
         </p>
-        <div className="mt-3 flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 font-mono text-lg font-bold tracking-widest">
+        <div className="mt-3 flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 font-mono text-lg font-bold tracking-widest dark:bg-slate-800">
           {group.invite_code}
         </div>
-        <div className="mt-2 break-all text-xs text-slate-500">
+        <div className="mt-2 break-all text-xs text-slate-500 dark:text-slate-400">
           {window.location.origin}/join?code={group.invite_code}
         </div>
       </div>
 
       <div className="card p-0">
-        <h2 className="px-4 py-3 text-sm font-semibold text-slate-700">
+        <h2 className="px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
           Members ({members.length})
         </h2>
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-slate-100 dark:divide-slate-800">
           {members.map((m) => (
             <li
               key={m.id}
@@ -65,7 +65,7 @@ export function Members() {
                 )}
               </span>
               {m.id === group.creator_player_id && (
-                <span className="pill bg-emerald-100 text-emerald-800">creator</span>
+                <span className="pill bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300">creator</span>
               )}
             </li>
           ))}
