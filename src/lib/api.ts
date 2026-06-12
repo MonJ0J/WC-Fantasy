@@ -1,5 +1,7 @@
 import { supabase } from "./supabase";
 import type {
+  AwardPrediction,
+  AwardType,
   GroupSession,
   LeaderboardRow,
   Match,
@@ -11,6 +13,7 @@ import type {
   PredictionOutcome,
   PublicMatchPrediction,
   Team,
+  TournamentPlayer,
 } from "./types";
 
 async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
@@ -245,6 +248,55 @@ export async function deleteOutrightPrediction(args: {
     p_group_id: args.groupId,
     p_bet_type: args.betType,
     p_bet_subkey: args.betSubkey ?? null,
+  });
+}
+
+// ---------- Award predictions (Top Scorer / Top Player / Top Nation) ----------
+
+export async function getTournamentPlayers(): Promise<TournamentPlayer[]> {
+  const { data, error } = await supabase
+    .from("tournament_players")
+    .select("id, name, team_id")
+    .order("name", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as TournamentPlayer[];
+}
+
+export async function getMyAwards(
+  playerId: string,
+  groupId: string,
+): Promise<AwardPrediction[]> {
+  return rpc<AwardPrediction[]>("get_my_awards", {
+    p_player_id: playerId,
+    p_group_id: groupId,
+  });
+}
+
+export async function submitAwardPrediction(args: {
+  playerId: string;
+  groupId: string;
+  awardType: AwardType;
+  playerName?: string | null;
+  teamId?: string | null;
+}): Promise<void> {
+  await rpc<void>("submit_award_prediction", {
+    p_player_id: args.playerId,
+    p_group_id: args.groupId,
+    p_award_type: args.awardType,
+    p_player_name: args.playerName ?? null,
+    p_team_id: args.teamId ?? null,
+  });
+}
+
+export async function deleteAwardPrediction(args: {
+  playerId: string;
+  groupId: string;
+  awardType: AwardType;
+}): Promise<void> {
+  await rpc<void>("delete_award_prediction", {
+    p_player_id: args.playerId,
+    p_group_id: args.groupId,
+    p_award_type: args.awardType,
   });
 }
 
