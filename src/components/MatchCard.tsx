@@ -58,6 +58,16 @@ export function MatchCard({ match, teamById, playerId, groupId, existing, onSave
             <div className="text-2xl font-bold tabular-nums">
               {match.home_score} <span className="text-slate-400">–</span> {match.away_score}
             </div>
+          ) : started && match.home_score != null && match.away_score != null ? (
+            <div className="flex flex-col items-center">
+              <div className="text-2xl font-bold tabular-nums text-red-600">
+                {match.home_score} <span className="text-slate-400">–</span> {match.away_score}
+              </div>
+              <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-red-600">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-600" />
+                Live
+              </span>
+            </div>
           ) : (
             <div className="text-xs font-medium uppercase tracking-wider text-slate-400">vs</div>
           )}
@@ -66,7 +76,7 @@ export function MatchCard({ match, teamById, playerId, groupId, existing, onSave
             {finished
               ? match.venue
               : started
-                ? "started"
+                ? "in progress"
                 : locked
                   ? relativeKickoff(match.kickoff_at)
                   : relativeLock(match.kickoff_at)}
