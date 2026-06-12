@@ -85,6 +85,24 @@ export async function getMyDashboard(playerId: string): Promise<DashboardGroup[]
   return rpc<DashboardGroup[]>("get_my_dashboard", { p_player_id: playerId });
 }
 
+export interface ImportResult {
+  matches_copied: number;
+  outrights_copied: number;
+}
+
+export async function importPredictionsFromGroup(args: {
+  playerId: string;
+  sourceGroupId: string;
+  destGroupId: string;
+}): Promise<ImportResult> {
+  const data = await rpc<ImportResult[]>("import_predictions_from_group", {
+    p_player_id: args.playerId,
+    p_source_group_id: args.sourceGroupId,
+    p_dest_group_id: args.destGroupId,
+  });
+  return data[0];
+}
+
 // ---------- Groups ----------
 
 export async function createGroup(

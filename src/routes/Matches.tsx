@@ -4,6 +4,7 @@ import { getAllMatches, getAllTeams, getMyMatchPredictions } from "../lib/api";
 import { supabase } from "../lib/supabase";
 import type { Match, MatchPrediction, Team } from "../lib/types";
 import { AutoFillModal } from "../components/AutoFillModal";
+import { ImportPicksModal } from "../components/ImportPicksModal";
 import { MatchCard } from "../components/MatchCard";
 import { EmptyState, Spinner } from "../components/Primitives";
 import { dayKey, formatDay } from "../lib/timezone";
@@ -29,6 +30,7 @@ export function Matches() {
   const [groupFilter, setGroupFilter] = useState<string>("ALL");
   const [stageFilter, setStageFilter] = useState<"ALL" | "GROUP" | "KO">("GROUP");
   const [autoFillOpen, setAutoFillOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -167,8 +169,13 @@ export function Matches() {
           title="Pick which teams advance and we fill in the rest"
         >
           🎲 Auto-fill picks
-        </button>
-      </div>
+        </button>        <button
+          onClick={() => setImportOpen(true)}
+          className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-3 py-1.5 text-xs font-semibold text-violet-800 transition hover:bg-violet-200"
+          title="Copy picks from another group you're in"
+        >
+          📥 Import picks
+        </button>      </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-slate-500 dark:text-slate-400">Stage</span>
@@ -237,6 +244,22 @@ export function Matches() {
         playerId={playerId}
         groupId={group.id}
         onComplete={handleAutoFilled}
+      />
+
+      <ImportPicksModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        playerId={playerId}
+        destGroupId={group.id}
+        destGroupName={group.name}
+        onComplete={async ({ matches: m, outrights: o }) => {
+          // Re-fetch the player's now-updated predictions.
+          const fresh = await getMyMatchPredictions(playerId, group.id).catch(
+            () => [] as MatchPrediction[],
+          );
+          setPredictions(fresh);
+          alert(`Imported ${m} match prediction${m === 1 ? "" : "s"} and ${o} outright bet${o === 1 ? "" : "s"}.`);
+        }}
       />
     </div>
   );
