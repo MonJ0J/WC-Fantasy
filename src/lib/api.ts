@@ -307,3 +307,13 @@ export async function getLastSync(): Promise<SyncLogRow | null> {
   if (error) throw new Error(error.message);
   return (data as SyncLogRow | null) ?? null;
 }
+
+// ---------- App settings ----------
+
+/**
+ * Returns the outrights lock deadline. Uses the app_settings override if
+ * present; otherwise falls back to match #1's kickoff time.
+ */
+export async function getOutrightsLockAt(): Promise<string | null> {
+  return rpc<string | null>("get_outrights_lock_at", {});
+}

@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import {
   deleteOutrightPrediction,
-  getAllMatches,
   getAllTeams,
   getMyOutrights,
+  getOutrightsLockAt,
   submitOutrightPrediction,
 } from "../lib/api";
 import type { OutrightBetType, OutrightPrediction, Team } from "../lib/types";
@@ -30,15 +30,14 @@ export function Outrights() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const [t, ms, mine] = await Promise.all([
+      const [t, lock, mine] = await Promise.all([
         getAllTeams(),
-        getAllMatches(),
+        getOutrightsLockAt().catch(() => null),
         getMyOutrights(playerId, group.id).catch(() => [] as OutrightPrediction[]),
       ]);
       if (cancelled) return;
       setTeams(t);
-      const m1 = ms.find((m) => m.id === 1);
-      setLockAt(m1?.kickoff_at ?? null);
+      setLockAt(lock);
       setPicks(mine);
       setLoading(false);
     })();
