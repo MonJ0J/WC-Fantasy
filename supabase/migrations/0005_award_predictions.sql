@@ -81,7 +81,21 @@ where exists (select 1 from matches where id = 1 and kickoff_at <= now());
 grant select on award_predictions_public to anon, authenticated;
 
 -- ---------- RPCs ----------
--- Awards lock at the first kickoff, same as the other outrights.
+-- Lock policy per award:
+--   * TOP_NATION              — locks at first kickoff (same as outrights).
+--   * TOP_SCORER / TOP_PLAYER — lock at Monday, June 15 2026 00:00.
+-- The player-award deadline is enforced here at 2026-06-15 12:00 UTC as a
+-- lenient backstop; the client shows/enforces the viewer's local midnight.
+-- Adjust the literal below if the deadline changes.
+create or replace function _award_locked(p_award_type award_type)
+returns boolean
+language sql stable as $$
+  select case
+    when p_award_type = 'TOP_NATION' then _outrights_locked()
+    else now() >= timestamptz '2026-06-15 12:00:00+00'
+  end;
+$$;
+
 create or replace function submit_award_prediction(
   p_player_id    uuid,
   p_group_id     uuid,
@@ -96,8 +110,8 @@ declare
 begin
   perform _assert_membership(p_player_id, p_group_id);
 
-  if _outrights_locked() then
-    raise exception 'award predictions have locked for this tournament';
+  if _award_locked(p_award_type) then
+    raise exception 'this award prediction has locked';
   end if;
 
   if p_award_type = 'TOP_NATION' then
@@ -136,8 +150,8 @@ returns void
 language plpgsql security definer set search_path = public as $$
 begin
   perform _assert_membership(p_player_id, p_group_id);
-  if _outrights_locked() then
-    raise exception 'award predictions have locked for this tournament';
+  if _award_locked(p_award_type) then
+    raise exception 'this award prediction has locked';
   end if;
   delete from award_predictions
   where player_id = p_player_id

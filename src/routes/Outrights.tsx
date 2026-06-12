@@ -20,7 +20,7 @@ import type {
   TournamentPlayer,
 } from "../lib/types";
 import { OUTRIGHT_POINTS } from "../lib/scoring";
-import { formatKickoff, isStarted } from "../lib/timezone";
+import { formatKickoff, formatPlayerAwardLock, isPlayerAwardLocked, isStarted } from "../lib/timezone";
 import { Spinner } from "../components/Primitives";
 import { cx } from "../lib/utils";
 import type { GroupContext } from "./GroupLayout";
@@ -79,6 +79,7 @@ export function Outrights() {
   );
 
   const locked = lockAt ? isStarted(lockAt) : false;
+  const playerAwardLocked = isPlayerAwardLocked();
 
   function pickKey(betType: OutrightBetType, subkey: string | null): string {
     return `${betType}:${subkey ?? ""}`;
@@ -304,33 +305,38 @@ export function Outrights() {
       <div className="card border-dashed bg-slate-50/50">
         <h3 className="text-sm font-semibold">🎖️ Tournament awards</h3>
         <p className="text-xs text-slate-500">
-          Call the individual awards. These are recorded with your other picks and lock at first
-          kickoff — they don't score points yet, but will count later.
+          Call the individual awards. They don't score points yet, but will count later. The Top
+          Goal Scorer and Top Player picks lock on <strong>{formatPlayerAwardLock()}</strong>; Top
+          Nation locks at first kickoff.
         </p>
       </div>
 
       <Section
         title="👟 Top Goal Scorer"
-        subtitle="Pick the tournament's leading scorer (Golden Boot). Choose a favourite or type any name."
+        subtitle={`Pick the tournament's leading scorer (Golden Boot). Choose a favourite or type any name.${
+          playerAwardLocked ? " 🔒 Locked." : ""
+        }`}
       >
         <PlayerPicker
           value={getAward("TOP_SCORER")?.predicted_player_name ?? ""}
           onCommit={(v) => void saveAward("TOP_SCORER", { playerName: v })}
           candidates={candidates}
-          disabled={locked}
+          disabled={playerAwardLocked}
           saving={savingKey === "AWARD:TOP_SCORER"}
         />
       </Section>
 
       <Section
         title="⭐ Top Player"
-        subtitle="Pick the best player of the tournament (Golden Ball). Choose a favourite or type any name."
+        subtitle={`Pick the best player of the tournament (Golden Ball). Choose a favourite or type any name.${
+          playerAwardLocked ? " 🔒 Locked." : ""
+        }`}
       >
         <PlayerPicker
           value={getAward("TOP_PLAYER")?.predicted_player_name ?? ""}
           onCommit={(v) => void saveAward("TOP_PLAYER", { playerName: v })}
           candidates={candidates}
-          disabled={locked}
+          disabled={playerAwardLocked}
           saving={savingKey === "AWARD:TOP_PLAYER"}
         />
       </Section>
