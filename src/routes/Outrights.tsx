@@ -1,13 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import {
+  deleteAwardPrediction,
   deleteOutrightPrediction,
   getAllTeams,
+  getMyAwards,
   getMyOutrights,
   getMyOutrightsLockAt,
+  getTournamentPlayers,
+  submitAwardPrediction,
   submitOutrightPrediction,
 } from "../lib/api";
-import type { OutrightBetType, OutrightPrediction, Team } from "../lib/types";
+import type {
+  AwardPrediction,
+  AwardType,
+  OutrightBetType,
+  OutrightPrediction,
+  Team,
+  TournamentPlayer,
+} from "../lib/types";
 import { OUTRIGHT_POINTS } from "../lib/scoring";
 import { formatKickoff, isStarted } from "../lib/timezone";
 import { Spinner } from "../components/Primitives";
@@ -21,6 +32,8 @@ export function Outrights() {
   const { group, playerId } = useOutletContext<GroupContext>();
   const [teams, setTeams] = useState<Team[]>([]);
   const [picks, setPicks] = useState<OutrightPrediction[]>([]);
+  const [candidates, setCandidates] = useState<TournamentPlayer[]>([]);
+  const [awards, setAwards] = useState<AwardPrediction[]>([]);
   const [lockAt, setLockAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<string | null>(null);
@@ -30,15 +43,19 @@ export function Outrights() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const [t, lock, mine] = await Promise.all([
+      const [t, lock, mine, cands, myAwards] = await Promise.all([
         getAllTeams(),
         getMyOutrightsLockAt(playerId, group.id).catch(() => null),
         getMyOutrights(playerId, group.id).catch(() => [] as OutrightPrediction[]),
+        getTournamentPlayers().catch(() => [] as TournamentPlayer[]),
+        getMyAwards(playerId, group.id).catch(() => [] as AwardPrediction[]),
       ]);
       if (cancelled) return;
       setTeams(t);
       setLockAt(lock);
       setPicks(mine);
+      setCandidates(cands);
+      setAwards(myAwards);
       setLoading(false);
     })();
     return () => {
@@ -111,6 +128,54 @@ export function Outrights() {
       }
     } catch (e) {
       setPicks(prev);
+      setError(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSavingKey(null);
+    }
+  }
+
+  function getAward(awardType: AwardType): AwardPrediction | undefined {
+    return awards.find((a) => a.award_type === awardType);
+  }
+
+  async function saveAward(
+    awardType: AwardType,
+    value: { playerName?: string | null; teamId?: string | null },
+  ) {
+    const key = `AWARD:${awardType}`;
+    const isNation = awardType === "TOP_NATION";
+    const trimmed = (value.playerName ?? "").trim();
+    const cleared = isNation ? !value.teamId : trimmed === "";
+
+    setSavingKey(key);
+    setError(null);
+
+    // Optimistic update.
+    const prev = awards;
+    const next = awards.filter((a) => a.award_type !== awardType);
+    if (!cleared) {
+      next.push({
+        award_type: awardType,
+        predicted_player_name: isNation ? null : trimmed,
+        predicted_team_id: isNation ? (value.teamId ?? null) : null,
+      });
+    }
+    setAwards(next);
+
+    try {
+      if (cleared) {
+        await deleteAwardPrediction({ playerId, groupId: group.id, awardType });
+      } else {
+        await submitAwardPrediction({
+          playerId,
+          groupId: group.id,
+          awardType,
+          playerName: isNation ? null : trimmed,
+          teamId: isNation ? value.teamId : null,
+        });
+      }
+    } catch (e) {
+      setAwards(prev);
       setError(e instanceof Error ? e.message : "Failed to save");
     } finally {
       setSavingKey(null);
@@ -236,6 +301,52 @@ export function Outrights() {
         </p>
       </Section>
 
+      <div className="card border-dashed bg-slate-50/50">
+        <h3 className="text-sm font-semibold">🎖️ Tournament awards</h3>
+        <p className="text-xs text-slate-500">
+          Call the individual awards. These are recorded with your other picks and lock at first
+          kickoff — they don't score points yet, but will count later.
+        </p>
+      </div>
+
+      <Section
+        title="👟 Top Goal Scorer"
+        subtitle="Pick the tournament's leading scorer (Golden Boot). Choose a favourite or type any name."
+      >
+        <PlayerPicker
+          value={getAward("TOP_SCORER")?.predicted_player_name ?? ""}
+          onCommit={(v) => void saveAward("TOP_SCORER", { playerName: v })}
+          candidates={candidates}
+          disabled={locked}
+          saving={savingKey === "AWARD:TOP_SCORER"}
+        />
+      </Section>
+
+      <Section
+        title="⭐ Top Player"
+        subtitle="Pick the best player of the tournament (Golden Ball). Choose a favourite or type any name."
+      >
+        <PlayerPicker
+          value={getAward("TOP_PLAYER")?.predicted_player_name ?? ""}
+          onCommit={(v) => void saveAward("TOP_PLAYER", { playerName: v })}
+          candidates={candidates}
+          disabled={locked}
+          saving={savingKey === "AWARD:TOP_PLAYER"}
+        />
+      </Section>
+
+      <Section
+        title="🌍 Top Nation"
+        subtitle="Pick the nation you think will be the standout team of the tournament."
+      >
+        <TeamPicker
+          value={getAward("TOP_NATION")?.predicted_team_id ?? ""}
+          onChange={(v) => void saveAward("TOP_NATION", { teamId: v })}
+          teams={teams}
+          disabled={locked || savingKey === "AWARD:TOP_NATION"}
+        />
+      </Section>
+
       {locked && (
         <p className="pt-4 text-center text-xs text-slate-500 dark:text-slate-400">
           Outrights are locked. Results score automatically as the tournament unfolds.
@@ -294,5 +405,56 @@ function TeamPicker({
           </option>
         ))}
     </select>
+  );
+}
+
+function PlayerPicker({
+  value,
+  onCommit,
+  candidates,
+  disabled,
+  saving,
+}: {
+  value: string;
+  onCommit: (v: string) => void;
+  candidates: TournamentPlayer[];
+  disabled: boolean;
+  saving: boolean;
+}) {
+  const listId = useMemo(() => `players-${Math.random().toString(36).slice(2)}`, []);
+  const [draft, setDraft] = useState(value);
+
+  // Keep the field in sync when the saved value changes (e.g. after load).
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  function commit() {
+    const trimmed = draft.trim();
+    if (trimmed !== value.trim()) onCommit(trimmed);
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="text"
+        list={listId}
+        value={draft}
+        placeholder="Type or pick a player…"
+        disabled={disabled}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+        }}
+        className={cx("input !py-2 !text-sm", draft && "border-brand-400 bg-brand-50")}
+      />
+      <datalist id={listId}>
+        {candidates.map((c) => (
+          <option key={c.id} value={c.name} />
+        ))}
+      </datalist>
+      {saving && <Spinner className="h-4 w-4 shrink-0 text-brand-600" />}
+    </div>
   );
 }
