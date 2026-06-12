@@ -276,15 +276,13 @@ export async function submitAwardPrediction(args: {
   playerId: string;
   groupId: string;
   awardType: AwardType;
-  playerName?: string | null;
-  teamId?: string | null;
+  playerName: string;
 }): Promise<void> {
   await rpc<void>("submit_award_prediction", {
     p_player_id: args.playerId,
     p_group_id: args.groupId,
     p_award_type: args.awardType,
-    p_player_name: args.playerName ?? null,
-    p_team_id: args.teamId ?? null,
+    p_player_name: args.playerName,
   });
 }
 
@@ -349,6 +347,18 @@ export async function setMatchTeams(args: {
     p_match_id: args.matchId,
     p_home_team: args.homeTeam,
     p_away_team: args.awayTeam,
+  });
+}
+
+export async function setAwardResult(args: {
+  adminKey: string;
+  awardType: AwardType;
+  winner: string;
+}): Promise<void> {
+  await rpc<void>("set_award_result", {
+    p_admin_key: args.adminKey,
+    p_award_type: args.awardType,
+    p_winner: args.winner,
   });
 }
 

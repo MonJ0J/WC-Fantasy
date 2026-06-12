@@ -139,14 +139,10 @@ export function Outrights() {
     return awards.find((a) => a.award_type === awardType);
   }
 
-  async function saveAward(
-    awardType: AwardType,
-    value: { playerName?: string | null; teamId?: string | null },
-  ) {
+  async function saveAward(awardType: AwardType, playerName: string) {
     const key = `AWARD:${awardType}`;
-    const isNation = awardType === "TOP_NATION";
-    const trimmed = (value.playerName ?? "").trim();
-    const cleared = isNation ? !value.teamId : trimmed === "";
+    const trimmed = playerName.trim();
+    const cleared = trimmed === "";
 
     setSavingKey(key);
     setError(null);
@@ -155,11 +151,7 @@ export function Outrights() {
     const prev = awards;
     const next = awards.filter((a) => a.award_type !== awardType);
     if (!cleared) {
-      next.push({
-        award_type: awardType,
-        predicted_player_name: isNation ? null : trimmed,
-        predicted_team_id: isNation ? (value.teamId ?? null) : null,
-      });
+      next.push({ award_type: awardType, predicted_player_name: trimmed });
     }
     setAwards(next);
 
@@ -171,8 +163,7 @@ export function Outrights() {
           playerId,
           groupId: group.id,
           awardType,
-          playerName: isNation ? null : trimmed,
-          teamId: isNation ? value.teamId : null,
+          playerName: trimmed,
         });
       }
     } catch (e) {
@@ -305,21 +296,20 @@ export function Outrights() {
       <div className="card border-dashed bg-slate-50/50">
         <h3 className="text-sm font-semibold">🎖️ Tournament awards</h3>
         <p className="text-xs text-slate-500">
-          Call the individual awards. They don't score points yet, but will count later. The Top
-          Goal Scorer and Top Player picks lock on <strong>{formatPlayerAwardLock()}</strong>; Top
-          Nation locks at first kickoff.
+          Call the individual awards — <strong>+10 pts each</strong>. Picks lock on{" "}
+          <strong>{formatPlayerAwardLock()}</strong>.
         </p>
       </div>
 
       <Section
         title="👟 Top Goal Scorer"
-        subtitle={`Pick the tournament's leading scorer (Golden Boot). Choose a favourite or type any name.${
+        subtitle={`+10 pts · pick the tournament's leading scorer (Golden Boot). Choose a favourite or type any name.${
           playerAwardLocked ? " 🔒 Locked." : ""
         }`}
       >
         <PlayerPicker
           value={getAward("TOP_SCORER")?.predicted_player_name ?? ""}
-          onCommit={(v) => void saveAward("TOP_SCORER", { playerName: v })}
+          onCommit={(v) => void saveAward("TOP_SCORER", v)}
           candidates={candidates}
           disabled={playerAwardLocked}
           saving={savingKey === "AWARD:TOP_SCORER"}
@@ -328,28 +318,16 @@ export function Outrights() {
 
       <Section
         title="⭐ Top Player"
-        subtitle={`Pick the best player of the tournament (Golden Ball). Choose a favourite or type any name.${
+        subtitle={`+10 pts · pick the best player of the tournament (Golden Ball). Choose a favourite or type any name.${
           playerAwardLocked ? " 🔒 Locked." : ""
         }`}
       >
         <PlayerPicker
           value={getAward("TOP_PLAYER")?.predicted_player_name ?? ""}
-          onCommit={(v) => void saveAward("TOP_PLAYER", { playerName: v })}
+          onCommit={(v) => void saveAward("TOP_PLAYER", v)}
           candidates={candidates}
           disabled={playerAwardLocked}
           saving={savingKey === "AWARD:TOP_PLAYER"}
-        />
-      </Section>
-
-      <Section
-        title="🌍 Top Nation"
-        subtitle="Pick the nation you think will be the standout team of the tournament."
-      >
-        <TeamPicker
-          value={getAward("TOP_NATION")?.predicted_team_id ?? ""}
-          onChange={(v) => void saveAward("TOP_NATION", { teamId: v })}
-          teams={teams}
-          disabled={locked || savingKey === "AWARD:TOP_NATION"}
         />
       </Section>
 
