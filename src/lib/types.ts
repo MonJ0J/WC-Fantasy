@@ -84,3 +84,16 @@ export interface PublicMatchPrediction extends MatchPrediction {
   player_id: string;
   group_id: string;
 }
+
+export type AwardType = "TOP_SCORER" | "TOP_PLAYER";
+
+export interface TournamentPlayer {
+  id: string;
+  name: string;
+  team_id: string | null;
+}
+
+export interface AwardPrediction {
+  award_type: AwardType;
+  predicted_player_name: string | null;
+}

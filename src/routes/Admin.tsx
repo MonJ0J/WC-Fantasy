@@ -4,11 +4,12 @@ import {
   getAllMatches,
   getAllTeams,
   getLastSync,
+  setAwardResult,
   setMatchResult,
   setMatchTeams,
   type SyncLogRow,
 } from "../lib/api";
-import type { Match, MatchStatus, Team } from "../lib/types";
+import type { AwardType, Match, MatchStatus, Team } from "../lib/types";
 import { STAGE_LABEL } from "../lib/scoring";
 import { formatKickoff } from "../lib/timezone";
 import { Spinner } from "../components/Primitives";
@@ -126,6 +127,8 @@ export function Admin() {
       <SyncStatusCard lastSync={lastSync} />
 
       {error && <div className="card border-red-300 bg-red-50 text-sm text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300">{error}</div>}
+
+      <AwardWinnersCard adminKey={adminKey} onError={setError} />
 
       <div className="space-y-3">
         {matches.map((m) => (
@@ -263,6 +266,79 @@ function TeamSelect({
         </option>
       ))}
     </select>
+  );
+}
+
+function AwardWinnersCard({
+  adminKey,
+  onError,
+}: {
+  adminKey: string;
+  onError: (msg: string | null) => void;
+}) {
+  const AWARDS: { type: AwardType; label: string }[] = [
+    { type: "TOP_SCORER", label: "👟 Top Goal Scorer" },
+    { type: "TOP_PLAYER", label: "⭐ Top Player" },
+  ];
+  return (
+    <div className="card space-y-3">
+      <header>
+        <h2 className="text-sm font-semibold">Award winners (+10 pts each)</h2>
+        <p className="text-xs text-slate-500">
+          Enter the official winner's name. Matching is case/whitespace-insensitive. Saving
+          recomputes the leaderboard. Leave blank and save to clear.
+        </p>
+      </header>
+      {AWARDS.map((a) => (
+        <AwardWinnerRow key={a.type} award={a} adminKey={adminKey} onError={onError} />
+      ))}
+    </div>
+  );
+}
+
+function AwardWinnerRow({
+  award,
+  adminKey,
+  onError,
+}: {
+  award: { type: AwardType; label: string };
+  adminKey: string;
+  onError: (msg: string | null) => void;
+}) {
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  async function save() {
+    setBusy(true);
+    setSaved(false);
+    onError(null);
+    try {
+      await setAwardResult({ adminKey, awardType: award.type, winner: name });
+      setSaved(true);
+    } catch (e) {
+      onError(e instanceof Error ? e.message : "Failed to save winner");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-40 shrink-0 text-sm font-medium">{award.label}</span>
+      <input
+        className="input !py-1.5 !text-sm"
+        placeholder="Winner's name (blank to clear)"
+        value={name}
+        onChange={(e) => {
+          setName(e.target.value);
+          setSaved(false);
+        }}
+      />
+      <button onClick={() => void save()} disabled={busy} className="btn-primary !py-1.5 !text-xs">
+        {busy ? <Spinner className="h-4 w-4" /> : saved ? "Saved ✓" : "Save"}
+      </button>
+    </div>
   );
 }
 

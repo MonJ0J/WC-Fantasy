@@ -147,6 +147,7 @@ export function Matches() {
   return (
     <div className="space-y-4">
       <HowToPlayCallout />
+      <NewAwardsCallout outrightsPath={`/g/${group.invite_code}/outrights`} />
 
       <div className="flex flex-wrap items-center gap-2">
         {FILTERS.map((f) => (
@@ -265,6 +266,7 @@ export function Matches() {
   );
 }
 const CALLOUT_KEY = "wc-fantasy-howto-dismissed";
+const AWARDS_CALLOUT_KEY = "wc-fantasy-awards-announced";
 
 function HowToPlayCallout() {
   const [dismissed, setDismissed] = useState(() => {
@@ -299,6 +301,48 @@ function HowToPlayCallout() {
         type="button"
         onClick={dismiss}
         className="rounded-md px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-500/20"
+        aria-label="Dismiss"
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
+
+function NewAwardsCallout({ outrightsPath }: { outrightsPath: string }) {
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(AWARDS_CALLOUT_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  if (dismissed) return null;
+  function dismiss() {
+    try {
+      localStorage.setItem(AWARDS_CALLOUT_KEY, "1");
+    } catch {
+      // ignore
+    }
+    setDismissed(true);
+  }
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-900">
+      <div className="flex items-center gap-2">
+        <span aria-hidden className="text-base">🆕</span>
+        <span>
+          New predictions! Call the <strong>Top Goal Scorer</strong> and{" "}
+          <strong>Top Player</strong> — <strong>+10 pts each</strong>. Set yours on the{" "}
+          <Link to={outrightsPath} className="font-bold underline">
+            Outrights
+          </Link>{" "}
+          page before they lock Monday.
+        </span>
+      </div>
+      <button
+        type="button"
+        onClick={dismiss}
+        className="rounded-md px-2 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100"
         aria-label="Dismiss"
       >
         ✕
