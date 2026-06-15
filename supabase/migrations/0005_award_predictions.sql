@@ -201,7 +201,7 @@ returns void
 language plpgsql security definer set search_path = public as $$
 begin
   if p_group_id is null then
-    delete from leaderboard_cache;
+    delete from leaderboard_cache where true;
   else
     delete from leaderboard_cache where group_id = p_group_id;
   end if;
