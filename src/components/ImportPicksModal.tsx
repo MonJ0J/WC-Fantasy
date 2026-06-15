@@ -104,7 +104,9 @@ export function ImportPicksModal({
               <h2 className="text-base font-bold">📥 Import picks</h2>
               <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                 Copy your match + outright picks from another group into{" "}
-                <strong>{destGroupName}</strong>.
+                <strong>{destGroupName}</strong>. Only picks for matches that hadn't
+                kicked off when this group was created will carry over (so nobody gets
+                a head-start).
               </p>
             </div>
             <button

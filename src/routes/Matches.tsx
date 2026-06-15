@@ -258,7 +258,17 @@ export function Matches() {
             () => [] as MatchPrediction[],
           );
           setPredictions(fresh);
-          alert(`Imported ${m} match prediction${m === 1 ? "" : "s"} and ${o} outright bet${o === 1 ? "" : "s"}.`);
+          if (m === 0 && o === 0) {
+            alert(
+              "No picks were imported — only matches that hadn't kicked off when this group was created can carry over, and none of your source picks qualified.",
+            );
+          } else {
+            alert(
+              `Imported ${m} match prediction${m === 1 ? "" : "s"} and ${o} outright bet${
+                o === 1 ? "" : "s"
+              }. (Only picks for matches that hadn't kicked off when this group was created.)`,
+            );
+          }
         }}
       />
     </div>
