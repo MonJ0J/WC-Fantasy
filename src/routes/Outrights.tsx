@@ -4,7 +4,7 @@ import {
   deleteOutrightPrediction,
   getAllTeams,
   getMyOutrights,
-  getOutrightsLockAt,
+  getMyOutrightsLockAt,
   submitOutrightPrediction,
 } from "../lib/api";
 import type { OutrightBetType, OutrightPrediction, Team } from "../lib/types";
@@ -32,7 +32,7 @@ export function Outrights() {
       setLoading(true);
       const [t, lock, mine] = await Promise.all([
         getAllTeams(),
-        getOutrightsLockAt().catch(() => null),
+        getMyOutrightsLockAt(playerId, group.id).catch(() => null),
         getMyOutrights(playerId, group.id).catch(() => [] as OutrightPrediction[]),
       ]);
       if (cancelled) return;

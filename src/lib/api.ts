@@ -335,3 +335,19 @@ export async function getLastSync(): Promise<SyncLogRow | null> {
 export async function getOutrightsLockAt(): Promise<string | null> {
   return rpc<string | null>("get_outrights_lock_at", {});
 }
+
+/**
+ * Returns the player's PERSONAL outrights lock for a group:
+ *   max(global lock, joined_at + grace days)
+ * Late joiners get a 3-day catch-up window; early joiners still lock at the
+ * global deadline.
+ */
+export async function getMyOutrightsLockAt(
+  playerId: string,
+  groupId: string,
+): Promise<string | null> {
+  return rpc<string | null>("get_my_outrights_lock_at", {
+    p_player_id: playerId,
+    p_group_id: groupId,
+  });
+}
