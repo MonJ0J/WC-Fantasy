@@ -1,0 +1,331 @@
+-- =====================================================================
+-- Migration 0011 — starter bonus for late joiners
+--
+-- When a player joins a group that already has scored matches, they get a
+-- starting bonus equal to the minimum non-zero `total_points` of existing
+-- members. The bonus is stored permanently on `memberships.starting_bonus`
+-- and rolls into `total_points` from then on. Subsequent match points are
+-- added on top.
+--
+-- Examples:
+--   * Join a group where existing members have [0, 5, 17, 20] pts → bonus = 5.
+--   * Join a group where existing members have [0, 0, 20] pts → bonus = 20.
+--   * Join a brand-new group with no finished matches → bonus = 0 (current behaviour).
+--
+-- Admins can override via `set_starter_bonus(admin_key, group_id, player_id, bonus)`.
+-- =====================================================================
+
+alter table memberships
+  add column if not exists starting_bonus int not null default 0;
+
+-- ---------- recalc_scores: include starting_bonus in total_points ----------
+-- Same as the version from migration 0005_award_predictions.sql, plus a single
+-- `+ coalesce(m.starting_bonus, 0)` term in the `combined` CTE.
+
+create or replace function recalc_scores(p_group_id uuid default null)
+returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if p_group_id is null then
+    delete from leaderboard_cache where true;
+  else
+    delete from leaderboard_cache where group_id = p_group_id;
+  end if;
+
+  with
+  ko_finished as (
+    select
+      m.id, m.stage,
+      m.home_score, m.away_score,
+      m.home_team_id, m.away_team_id,
+      case
+        when m.winner_team_id = m.home_team_id then 'HOME'::prediction_outcome
+        when m.winner_team_id = m.away_team_id then 'AWAY'::prediction_outcome
+        when m.home_score > m.away_score        then 'HOME'::prediction_outcome
+        when m.away_score > m.home_score        then 'AWAY'::prediction_outcome
+      end as actual_outcome,
+      case
+        when m.winner_team_id is not null then m.winner_team_id
+        when m.home_score > m.away_score  then m.home_team_id
+        when m.away_score > m.home_score  then m.away_team_id
+      end as winner
+    from matches m
+    where m.stage <> 'GROUP'
+      and m.status = 'FINISHED'
+      and m.home_score is not null and m.away_score is not null
+  ),
+  group_finished as (
+    select
+      m.id, m.home_score, m.away_score,
+      case
+        when m.home_score > m.away_score then 'HOME'::prediction_outcome
+        when m.home_score < m.away_score then 'AWAY'::prediction_outcome
+        else 'DRAW'::prediction_outcome
+      end as actual_outcome
+    from matches m
+    where m.stage = 'GROUP' and m.status = 'FINISHED'
+      and m.home_score is not null and m.away_score is not null
+  ),
+  group_scored as (
+    select
+      mp.group_id, mp.player_id,
+      sum(case when mp.predicted_outcome = gf.actual_outcome then 3 else 0 end)
+        + sum(case when mp.predicted_outcome = gf.actual_outcome
+                    and mp.predicted_home_score = gf.home_score
+                    and mp.predicted_away_score = gf.away_score
+                  then 2 else 0 end) as pts,
+      sum(case when mp.predicted_outcome = gf.actual_outcome then 1 else 0 end) as outcomes,
+      sum(case when mp.predicted_outcome = gf.actual_outcome
+                and mp.predicted_home_score = gf.home_score
+                and mp.predicted_away_score = gf.away_score
+              then 1 else 0 end) as exacts
+    from match_predictions mp
+    join group_finished gf on gf.id = mp.match_id
+    group by mp.group_id, mp.player_id
+  ),
+  ko_scored as (
+    select
+      mp.group_id, mp.player_id,
+      sum(case when mp.predicted_outcome = kf.actual_outcome then
+        case kf.stage
+          when 'R32'   then  5
+          when 'R16'   then  8
+          when 'QF'    then 12
+          when 'SF'    then 18
+          when 'THIRD' then 10
+          when 'FINAL' then 25
+        end
+      else 0 end)
+      + sum(case when mp.predicted_outcome = kf.actual_outcome
+                  and mp.predicted_home_score = kf.home_score
+                  and mp.predicted_away_score = kf.away_score
+                then
+        case kf.stage
+          when 'R32'   then  3
+          when 'R16'   then  5
+          when 'QF'    then  8
+          when 'SF'    then 10
+          when 'THIRD' then  0
+          when 'FINAL' then 15
+        end
+      else 0 end) as pts,
+      sum(case when mp.predicted_outcome = kf.actual_outcome then 1 else 0 end) as ko_correct,
+      sum(case when mp.predicted_outcome = kf.actual_outcome
+                and mp.predicted_home_score = kf.home_score
+                and mp.predicted_away_score = kf.away_score
+              then 1 else 0 end) as ko_exacts
+    from match_predictions mp
+    join ko_finished kf on kf.id = mp.match_id
+    group by mp.group_id, mp.player_id
+  ),
+  champion as (
+    select winner as team from ko_finished where id = 104
+  ),
+  runner_up as (
+    select case when winner = home_team_id then away_team_id else home_team_id end as team
+    from ko_finished where id = 104
+  ),
+  group_winner_map (letter, match_id) as (values
+    ('A', 79), ('B', 85), ('C', 76), ('D', 81),
+    ('E', 74), ('F', 75), ('G', 82), ('H', 84),
+    ('I', 77), ('J', 86), ('K', 87), ('L', 80)
+  ),
+  group_winners as (
+    select gwm.letter, m.home_team_id as team
+    from group_winner_map gwm
+    join matches m on m.id = gwm.match_id
+    where m.home_team_id is not null
+  ),
+  sf_teams as (
+    select home_team_id as team from matches where id in (101, 102) and home_team_id is not null
+    union
+    select away_team_id from matches where id in (101, 102) and away_team_id is not null
+  ),
+  ko_started as (
+    select exists (
+      select 1 from matches where stage = 'R32' and home_team_id is not null
+    ) as ready
+  ),
+  underperformers as (
+    select t.id as team
+    from teams t, ko_started k
+    where k.ready
+      and t.seed_position in (1, 2)
+      and not exists (
+        select 1 from matches m
+        where m.stage in ('R32','R16','QF','SF','FINAL','THIRD')
+          and (m.home_team_id = t.id or m.away_team_id = t.id)
+      )
+  ),
+  outright_scored as (
+    select
+      op.group_id, op.player_id,
+      sum(case
+        when op.bet_type = 'CHAMPION'
+          and exists (select 1 from champion c where c.team = op.predicted_team_id) then 50
+        when op.bet_type = 'RUNNER_UP'
+          and exists (select 1 from runner_up r where r.team = op.predicted_team_id) then 30
+        when op.bet_type = 'GROUP_WINNER'
+          and exists (select 1 from group_winners gw
+                       where gw.letter = op.bet_subkey and gw.team = op.predicted_team_id) then 5
+        when op.bet_type = 'SEMIFINALIST'
+          and exists (select 1 from sf_teams s where s.team = op.predicted_team_id) then 10
+        when op.bet_type = 'UNDERPERFORMER'
+          and exists (select 1 from underperformers u where u.team = op.predicted_team_id) then 20
+        else 0
+      end) as pts,
+      sum(case
+        when op.bet_type = 'CHAMPION'
+          and exists (select 1 from champion c where c.team = op.predicted_team_id) then 1
+        when op.bet_type = 'RUNNER_UP'
+          and exists (select 1 from runner_up r where r.team = op.predicted_team_id) then 1
+        when op.bet_type = 'GROUP_WINNER'
+          and exists (select 1 from group_winners gw
+                       where gw.letter = op.bet_subkey and gw.team = op.predicted_team_id) then 1
+        when op.bet_type = 'SEMIFINALIST'
+          and exists (select 1 from sf_teams s where s.team = op.predicted_team_id) then 1
+        when op.bet_type = 'UNDERPERFORMER'
+          and exists (select 1 from underperformers u where u.team = op.predicted_team_id) then 1
+        else 0
+      end) as correct
+    from outright_predictions op
+    group by op.group_id, op.player_id
+  ),
+  award_scored as (
+    select
+      ap.group_id, ap.player_id,
+      sum(_award_points(ap.award_type)) as pts,
+      count(*) as correct
+    from award_predictions ap
+    join award_results ar on ar.award_type = ap.award_type
+     and lower(btrim(ap.predicted_player_name)) = lower(btrim(ar.winner_player_name))
+    group by ap.group_id, ap.player_id
+  ),
+  combined as (
+    select
+      m.group_id, m.player_id,
+      coalesce(gs.pts, 0) + coalesce(ks.pts, 0) + coalesce(os.pts, 0)
+        + coalesce(aws.pts, 0) + coalesce(m.starting_bonus, 0)             as total_points,
+      coalesce(gs.outcomes, 0) + coalesce(ks.ko_correct, 0)                as correct_outcomes,
+      coalesce(gs.exacts,   0) + coalesce(ks.ko_exacts, 0)                 as exact_scores,
+      coalesce(ks.ko_correct, 0)                                           as ko_correct,
+      coalesce(os.correct, 0) + coalesce(aws.correct, 0)                   as outright_correct
+    from memberships m
+    left join group_scored    gs  on gs.group_id  = m.group_id and gs.player_id  = m.player_id
+    left join ko_scored       ks  on ks.group_id  = m.group_id and ks.player_id  = m.player_id
+    left join outright_scored os  on os.group_id  = m.group_id and os.player_id  = m.player_id
+    left join award_scored    aws on aws.group_id = m.group_id and aws.player_id = m.player_id
+    where p_group_id is null or m.group_id = p_group_id
+  )
+  insert into leaderboard_cache
+    (group_id, player_id, total_points, correct_outcomes, exact_scores, ko_correct, outright_correct)
+  select group_id, player_id, total_points, correct_outcomes, exact_scores, ko_correct, outright_correct
+  from combined
+  on conflict (group_id, player_id) do update set
+    total_points     = excluded.total_points,
+    correct_outcomes = excluded.correct_outcomes,
+    exact_scores     = excluded.exact_scores,
+    ko_correct       = excluded.ko_correct,
+    outright_correct = excluded.outright_correct,
+    updated_at       = now();
+end;
+$$;
+
+-- ---------- join_group: auto-apply starter bonus when joining a live group ----------
+create or replace function join_group(p_player_id uuid, p_invite_code text)
+returns uuid
+language plpgsql security definer set search_path = public as $$
+declare
+  g_id uuid;
+  p_name text;
+  conflict_count int;
+  bonus int := 0;
+  group_has_started boolean := false;
+  is_already_member boolean := false;
+begin
+  select gs.id into g_id
+  from groups_sessions gs
+  where gs.invite_code = upper(trim(p_invite_code));
+
+  if g_id is null then
+    raise exception 'invite code not found';
+  end if;
+
+  -- Idempotency: if the player is already in this group, no-op.
+  select exists (
+    select 1 from memberships
+    where group_id = g_id and player_id = p_player_id
+  ) into is_already_member;
+  if is_already_member then
+    return g_id;
+  end if;
+
+  -- Display-name uniqueness within the group.
+  select display_name into p_name from players where id = p_player_id;
+  select count(*) into conflict_count
+  from memberships m
+  join players p2 on p2.id = m.player_id
+  where m.group_id = g_id
+    and m.player_id <> p_player_id
+    and lower(p2.display_name) = lower(p_name);
+  if conflict_count > 0 then
+    raise exception 'someone in this group already uses the name "%"', p_name;
+  end if;
+
+  -- Compute starter bonus if at least one match has finished.
+  select exists (
+    select 1 from matches where status = 'FINISHED'
+  ) into group_has_started;
+
+  if group_has_started then
+    -- Refresh the leaderboard so we read an up-to-date min.
+    perform recalc_scores(g_id);
+    select coalesce(min(total_points), 0)
+      into bonus
+      from leaderboard_cache
+     where group_id = g_id
+       and total_points > 0;
+  end if;
+
+  insert into memberships (group_id, player_id, starting_bonus)
+  values (g_id, p_player_id, bonus);
+
+  -- Seed a leaderboard row, then recalc to fold the bonus in correctly.
+  insert into leaderboard_cache (group_id, player_id, total_points)
+  values (g_id, p_player_id, bonus)
+  on conflict (group_id, player_id) do nothing;
+
+  perform recalc_scores(g_id);
+
+  return g_id;
+end;
+$$;
+
+-- ---------- Admin override: set/adjust a member's starter bonus ----------
+create or replace function set_starter_bonus(
+  p_admin_key  text,
+  p_group_id   uuid,
+  p_player_id  uuid,
+  p_bonus      int
+)
+returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  perform _check_admin_key(p_admin_key);
+  if p_bonus < 0 then
+    raise exception 'bonus must be non-negative';
+  end if;
+  if not exists (
+    select 1 from memberships where group_id = p_group_id and player_id = p_player_id
+  ) then
+    raise exception 'player % is not a member of group %', p_player_id, p_group_id;
+  end if;
+  update memberships
+     set starting_bonus = p_bonus
+   where group_id = p_group_id and player_id = p_player_id;
+  perform recalc_scores(p_group_id);
+end;
+$$;
+
+grant execute on function set_starter_bonus(text, uuid, uuid, int)
+  to anon, authenticated;
