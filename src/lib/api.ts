@@ -73,6 +73,18 @@ export async function attachCredentials(args: {
   });
 }
 
+export async function changePassword(args: {
+  playerId: string;
+  oldPassword: string;
+  newPassword: string;
+}): Promise<void> {
+  await rpc<void>("change_password", {
+    p_player_id: args.playerId,
+    p_old_password: args.oldPassword,
+    p_new_password: args.newPassword,
+  });
+}
+
 export interface DashboardGroup {
   group_id: string;
   group_name: string;

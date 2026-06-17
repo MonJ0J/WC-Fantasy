@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
+  changePassword,
   createGroup,
   getGroupByCode,
   getMyDashboard,
@@ -89,7 +90,9 @@ export function Me() {
       {tab === "join" && <JoinGroup playerId={playerId} />}
       {tab === "settings" && (
         <Settings
+          playerId={playerId}
           displayName={displayName ?? ""}
+          hasPassword={!!username}
           onRename={async (name) => {
             await renamePlayer(playerId, name);
             updateName(name);
@@ -279,11 +282,15 @@ function JoinGroup({ playerId }: { playerId: string }) {
 }
 
 function Settings({
+  playerId,
   displayName,
+  hasPassword,
   onRename,
   onSignOut,
 }: {
+  playerId: string;
   displayName: string;
+  hasPassword: boolean;
   onRename: (name: string) => Promise<void>;
   onSignOut: () => void;
 }) {
@@ -329,6 +336,8 @@ function Settings({
         {msg && <p className="text-xs text-emerald-700 dark:text-emerald-400">{msg}</p>}
       </form>
 
+      {hasPassword && <ChangePasswordForm playerId={playerId} />}
+
       <div className="card">
         <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Sign out</h2>
         <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
@@ -346,5 +355,85 @@ function Settings({
         </button>
       </div>
     </div>
+  );
+}
+
+function ChangePasswordForm({ playerId }: { playerId: string }) {
+  const [oldPw, setOldPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setMsg(null);
+    if (newPw.length < 6) {
+      setError("New password must be at least 6 characters");
+      return;
+    }
+    if (newPw !== confirmPw) {
+      setError("Passwords don't match");
+      return;
+    }
+    setSaving(true);
+    try {
+      await changePassword({ playerId, oldPassword: oldPw, newPassword: newPw });
+      setMsg("Password updated");
+      setOldPw("");
+      setNewPw("");
+      setConfirmPw("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to change password");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="card space-y-3">
+      <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Change password</h2>
+      <PwField label="Current password" value={oldPw} onChange={setOldPw} autoComplete="current-password" />
+      <PwField label="New password" value={newPw} onChange={setNewPw} autoComplete="new-password" hint="At least 6 characters." />
+      <PwField label="Confirm new password" value={confirmPw} onChange={setConfirmPw} autoComplete="new-password" />
+      {error && <p className="text-xs text-red-600">{error}</p>}
+      {msg && <p className="text-xs text-emerald-700 dark:text-emerald-400">{msg}</p>}
+      <button type="submit" className="btn-primary w-full" disabled={saving}>
+        {saving ? <Spinner /> : "Update password"}
+      </button>
+    </form>
+  );
+}
+
+function PwField({
+  label,
+  value,
+  onChange,
+  autoComplete,
+  hint,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  autoComplete: string;
+  hint?: string;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        {label}
+      </span>
+      <input
+        type="password"
+        className="input"
+        value={value}
+        autoComplete={autoComplete}
+        maxLength={128}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      {hint && <span className="mt-1 block text-[11px] text-slate-500 dark:text-slate-400">{hint}</span>}
+    </label>
   );
 }
