@@ -54,26 +54,43 @@ export function PredictionWidget({
 
   const locked = isLocked(match.kickoff_at) || isStarted(match.kickoff_at);
 
-  // Auto-derive outcome from score if scores entered and outcome unset.
-  useEffect(() => {
-    if (home === "" || away === "") return;
+  /** Compute the outcome that scores imply, or null if scores are incomplete. */
+  function outcomeFromScores(): PredictionOutcome | null {
+    if (home === "" || away === "") return null;
     const h = Number(home);
     const a = Number(away);
-    if (Number.isNaN(h) || Number.isNaN(a)) return;
-    if (h === a) {
-      // Equal scores: GROUP → derive DRAW; KO → don't touch (user must
-      // pick the PK winner explicitly).
-      if (!ko) setOutcome((cur) => (cur === "DRAW" ? cur : "DRAW"));
-      return;
-    }
-    const derived: PredictionOutcome = h > a ? "HOME" : "AWAY";
-    setOutcome((cur) => (cur && cur !== derived ? cur : derived));
+    if (Number.isNaN(h) || Number.isNaN(a)) return null;
+    if (h > a) return "HOME";
+    if (h < a) return "AWAY";
+    return "DRAW";
+  }
+
+  /**
+   * Auto-derive outcome from scores 1 second after the user stops typing.
+   * The debounce prevents the UI from flipping to DRAW mid-edit (e.g. while
+   * the user is changing 2-1 to 3-1 and the away digit is briefly blank).
+   * For KO matches a tied score doesn't auto-pick — user must click HOME or
+   * AWAY explicitly to indicate the PK winner.
+   */
+  useEffect(() => {
+    if (home === "" || away === "") return;
+    const t = setTimeout(() => {
+      const derived = outcomeFromScores();
+      if (derived == null) return;
+      if (ko && derived === "DRAW") return;
+      setOutcome((cur) => (cur === derived ? cur : derived));
+    }, 1000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [home, away, ko]);
+
+  function clearScores() {
+    setHome("");
+    setAway("");
+  }
 
   async function save(nextOutcome: PredictionOutcome | null) {
     if (locked) return;
-    const chosen = nextOutcome ?? outcome;
-    if (!chosen) return;
 
     const h = home === "" ? null : Number(home);
     const a = away === "" ? null : Number(away);
@@ -84,6 +101,23 @@ export function PredictionWidget({
       setError("Scores must be between 0 and 20");
       return;
     }
+
+    // Scores are the source of truth. If both are filled, the outcome must
+    // match. For KO matches, a tied score keeps the user-selected outcome
+    // (HOME/AWAY = the PK winner) since draws aren't allowed there.
+    let chosen: PredictionOutcome | null;
+    if (h != null && a != null) {
+      if (h > a) chosen = "HOME";
+      else if (h < a) chosen = "AWAY";
+      else if (ko) chosen = nextOutcome ?? outcome;
+      else chosen = "DRAW";
+    } else {
+      chosen = nextOutcome ?? outcome;
+    }
+    if (!chosen) return;
+
+    // Reflect the reconciled outcome immediately so the UI matches what saved.
+    if (chosen !== outcome) setOutcome(chosen);
 
     setSaving(true);
     setError(null);
@@ -160,6 +194,17 @@ export function PredictionWidget({
           >
             {saving ? <Spinner className="h-4 w-4" /> : "Save score"}
           </button>
+          {(home !== "" || away !== "") && (
+            <button
+              type="button"
+              onClick={clearScores}
+              disabled={saving}
+              className="text-xs text-slate-500 hover:text-slate-700 hover:underline dark:text-slate-400 dark:hover:text-slate-200"
+              title="Clear scores (keeps your outcome pick)"
+            >
+              Clear
+            </button>
+          )}
         </div>
         {savedAt && !saving && !error && (
           <span className="text-xs text-emerald-600">Saved ✓</span>
