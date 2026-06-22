@@ -1,7 +1,8 @@
-import type { Match, MatchPrediction, Team } from "../lib/types";
+import type { Match, MatchPrediction, PublicMatchPrediction, Team } from "../lib/types";
 import { actualOutcome, scorePrediction, STAGE_LABEL } from "../lib/scoring";
 import { formatKickoff, isLocked, isStarted, relativeKickoff, relativeLock } from "../lib/timezone";
 import { cx } from "../lib/utils";
+import { GroupPicks } from "./GroupPicks";
 import { StatusPill } from "./Primitives";
 import { PredictionWidget } from "./PredictionWidget";
 
@@ -12,9 +13,22 @@ interface Props {
   groupId: string;
   existing: MatchPrediction | undefined;
   onSaved: (pred: MatchPrediction) => void;
+  /** Public picks for this match (only revealed post-kickoff via the SQL view). */
+  groupPicks?: PublicMatchPrediction[];
+  /** Lookup player_id -> display_name for the group. */
+  nameById?: Map<string, string>;
 }
 
-export function MatchCard({ match, teamById, playerId, groupId, existing, onSaved }: Props) {
+export function MatchCard({
+  match,
+  teamById,
+  playerId,
+  groupId,
+  existing,
+  onSaved,
+  groupPicks,
+  nameById,
+}: Props) {
   const home = match.home_team_id ? teamById.get(match.home_team_id) : undefined;
   const away = match.away_team_id ? teamById.get(match.away_team_id) : undefined;
 
@@ -112,6 +126,17 @@ export function MatchCard({ match, teamById, playerId, groupId, existing, onSave
           groupId={groupId}
           existing={existing}
           onSaved={onSaved}
+        />
+      )}
+
+      {started && groupPicks && nameById && (
+        <GroupPicks
+          match={match}
+          picks={groupPicks}
+          nameById={nameById}
+          homeTeam={home}
+          awayTeam={away}
+          myPlayerId={playerId}
         />
       )}
     </article>
