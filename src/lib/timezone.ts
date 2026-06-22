@@ -1,7 +1,7 @@
 import { format, formatDistanceToNowStrict, isBefore } from "date-fns";
 
-/** kickoff lock window for group-stage match predictions (1 hour before). */
-export const PREDICTION_LOCK_MS = 60 * 60 * 1000;
+/** kickoff lock window for group-stage match predictions (15 minutes before). */
+export const PREDICTION_LOCK_MS = 15 * 60 * 1000;
 
 /**
  * Player award picks (Top Goal Scorer, Top Player) lock at local midnight on

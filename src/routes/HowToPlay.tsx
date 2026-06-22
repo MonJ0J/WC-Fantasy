@@ -68,7 +68,7 @@ export function HowToPlay() {
       {/* Lock rules */}
       <Section title="🔒 When picks lock" subtitle="No back-dating, no take-backs.">
         <div className="grid gap-2 sm:grid-cols-2">
-          <LockRow when="1 hour before kickoff" what="Each individual match prediction" />
+          <LockRow when="15 minutes before kickoff" what="Each individual match prediction" />
           <LockRow when="First match (June 11, noon)" what="All 5 outright bets" />
         </div>
         <p className="mt-3 text-xs text-slate-600 dark:text-slate-300">

@@ -9,7 +9,7 @@ A tiny **2026 FIFA World Cup prediction site** for groups of friends. Pick the w
 - **Auth:** No accounts. Pick a display name; identity persists in your browser's localStorage. Join a group with a short invite code (e.g. `WC-NEIGH7`).
 - **Per-match scoring:** Group stage = 3 pts outcome + 2 bonus exact score. Knockouts escalate: R32 5+3, R16 8+5, QF 12+8, SF 18+10, FINAL 25+15. Third-place 10.
 - **Outright bets (lock at first kickoff):** Champion +50, Runner-up +30, Group Winners +5 × 12, Semifinalists +10 × 4, Underperformer (Pot 1/2 only) +20. Max bonus ~205 pts.
-- **Lock:** Per-match predictions lock 1 hour before kickoff. Outright bets lock when the first match kicks off.
+- **Lock:** Per-match predictions lock 15 minutes before kickoff. Outright bets lock when the first match kicks off.
 
 ## Setup — first time
 
