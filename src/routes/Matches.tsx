@@ -1,8 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useOutletContext } from "react-router-dom";
-import { getAllMatches, getAllTeams, getMyMatchPredictions } from "../lib/api";
+import {
+  getAllMatches,
+  getAllTeams,
+  getGroupMembers,
+  getMyMatchPredictions,
+  getPublicPredictions,
+} from "../lib/api";
 import { supabase } from "../lib/supabase";
-import type { Match, MatchPrediction, Team } from "../lib/types";
+import type {
+  Match,
+  MatchPrediction,
+  Player,
+  PublicMatchPrediction,
+  Team,
+} from "../lib/types";
 import { AutoFillModal } from "../components/AutoFillModal";
 import { ImportPicksModal } from "../components/ImportPicksModal";
 import { MatchCard } from "../components/MatchCard";
@@ -11,8 +23,9 @@ import { dayKey, formatDay } from "../lib/timezone";
 import { cx } from "../lib/utils";
 import type { GroupContext } from "./GroupLayout";
 
-type Filter = "all" | "live" | "finished";
+type Filter = "today" | "all" | "live" | "finished";
 const FILTERS: Array<{ key: Filter; label: string }> = [
+  { key: "today", label: "Today" },
   { key: "all", label: "All" },
   { key: "live", label: "Live" },
   { key: "finished", label: "Finished" },
@@ -23,8 +36,10 @@ export function Matches() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [predictions, setPredictions] = useState<MatchPrediction[]>([]);
+  const [members, setMembers] = useState<Player[]>([]);
+  const [publicPicks, setPublicPicks] = useState<PublicMatchPrediction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<Filter>("today");
   const [groupFilter, setGroupFilter] = useState<string>("ALL");
   const [stageFilter, setStageFilter] = useState<"ALL" | "GROUP" | "KO">("GROUP");
   const [autoFillOpen, setAutoFillOpen] = useState(false);
@@ -35,15 +50,19 @@ export function Matches() {
     (async () => {
       setLoading(true);
       try {
-        const [m, t, p] = await Promise.all([
+        const [m, t, p, mem, pub] = await Promise.all([
           getAllMatches(),
           getAllTeams(),
           getMyMatchPredictions(playerId, group.id),
+          getGroupMembers(group.id),
+          getPublicPredictions(group.id).catch(() => [] as PublicMatchPrediction[]),
         ]);
         if (cancelled) return;
         setMatches(m);
         setTeams(t);
         setPredictions(p);
+        setMembers(mem);
+        setPublicPicks(pub);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -76,15 +95,31 @@ export function Matches() {
     () => new Map(predictions.map((p) => [p.match_id, p])),
     [predictions],
   );
+  const nameById = useMemo(
+    () => new Map(members.map((m) => [m.id, m.display_name])),
+    [members],
+  );
+  const publicByMatch = useMemo(() => {
+    const map = new Map<number, PublicMatchPrediction[]>();
+    for (const p of publicPicks) {
+      const arr = map.get(p.match_id) ?? [];
+      arr.push(p);
+      map.set(p.match_id, arr);
+    }
+    return map;
+  }, [publicPicks]);
 
   const filtered = useMemo(() => {
     const now = Date.now();
+    const today = dayKey(new Date().toISOString());
     return matches.filter((m) => {
       if (stageFilter === "GROUP" && m.stage !== "GROUP") return false;
       if (stageFilter === "KO" && m.stage === "GROUP") return false;
       if (groupFilter !== "ALL" && m.group_letter !== groupFilter) return false;
       const kickoff = new Date(m.kickoff_at).getTime();
       switch (filter) {
+        case "today":
+          return dayKey(m.kickoff_at) === today;
         case "live":
           return m.status === "LIVE" || (kickoff <= now && m.status !== "FINISHED");
         case "finished":
@@ -223,6 +258,8 @@ export function Matches() {
                   groupId={group.id}
                   existing={predByMatch.get(m.id)}
                   onSaved={handleSaved}
+                  groupPicks={publicByMatch.get(m.id)}
+                  nameById={nameById}
                 />
               ))}
             </div>
