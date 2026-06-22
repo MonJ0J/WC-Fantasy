@@ -23,8 +23,9 @@ import { dayKey, formatDay } from "../lib/timezone";
 import { cx } from "../lib/utils";
 import type { GroupContext } from "./GroupLayout";
 
-type Filter = "all" | "live" | "finished";
+type Filter = "today" | "all" | "live" | "finished";
 const FILTERS: Array<{ key: Filter; label: string }> = [
+  { key: "today", label: "Today" },
   { key: "all", label: "All" },
   { key: "live", label: "Live" },
   { key: "finished", label: "Finished" },
@@ -38,7 +39,7 @@ export function Matches() {
   const [members, setMembers] = useState<Player[]>([]);
   const [publicPicks, setPublicPicks] = useState<PublicMatchPrediction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<Filter>("today");
   const [groupFilter, setGroupFilter] = useState<string>("ALL");
   const [stageFilter, setStageFilter] = useState<"ALL" | "GROUP" | "KO">("GROUP");
   const [autoFillOpen, setAutoFillOpen] = useState(false);
@@ -110,12 +111,15 @@ export function Matches() {
 
   const filtered = useMemo(() => {
     const now = Date.now();
+    const today = dayKey(new Date().toISOString());
     return matches.filter((m) => {
       if (stageFilter === "GROUP" && m.stage !== "GROUP") return false;
       if (stageFilter === "KO" && m.stage === "GROUP") return false;
       if (groupFilter !== "ALL" && m.group_letter !== groupFilter) return false;
       const kickoff = new Date(m.kickoff_at).getTime();
       switch (filter) {
+        case "today":
+          return dayKey(m.kickoff_at) === today;
         case "live":
           return m.status === "LIVE" || (kickoff <= now && m.status !== "FINISHED");
         case "finished":
