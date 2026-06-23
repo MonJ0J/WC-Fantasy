@@ -8,7 +8,7 @@ export const PREDICTION_LOCK_MS = 15 * 60 * 1000;
  * Monday, June 15 2026 — earlier than the first-kickoff lock used by the other
  * outrights. Constructed in the viewer's local timezone (month is 0-indexed).
  */
-export const PLAYER_AWARD_LOCK = new Date(2026, 5, 15, 0, 0, 0);
+export const PLAYER_AWARD_LOCK = new Date("2026-06-24T06:00:00Z");
 
 export function isPlayerAwardLocked(now: Date = new Date()): boolean {
   return !isBefore(now, PLAYER_AWARD_LOCK);
