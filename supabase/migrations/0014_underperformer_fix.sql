@@ -91,7 +91,7 @@ language sql stable security definer set search_path = public as $$
   ),
   rows as (
     select 'CHAMPION'::outright_bet_type as bet_type, null::text as bet_subkey,
-      c.team, c.resolved from champ c
+      c.team as team_id, c.resolved from champ c
     union all
     select 'RUNNER_UP'::outright_bet_type, null, r.team, r.resolved from runner r
     union all
