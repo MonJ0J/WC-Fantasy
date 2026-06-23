@@ -23,9 +23,10 @@ import { dayKey, formatDay } from "../lib/timezone";
 import { cx } from "../lib/utils";
 import type { GroupContext } from "./GroupLayout";
 
-type Filter = "today" | "all" | "live" | "finished";
+type Filter = "today" | "upcoming" | "all" | "live" | "finished";
 const FILTERS: Array<{ key: Filter; label: string }> = [
   { key: "today", label: "Today" },
+  { key: "upcoming", label: "Upcoming" },
   { key: "all", label: "All" },
   { key: "live", label: "Live" },
   { key: "finished", label: "Finished" },
@@ -120,6 +121,8 @@ export function Matches() {
       switch (filter) {
         case "today":
           return dayKey(m.kickoff_at) === today;
+        case "upcoming":
+          return kickoff > now && m.status !== "FINISHED";
         case "live":
           return m.status === "LIVE" || (kickoff <= now && m.status !== "FINISHED");
         case "finished":
