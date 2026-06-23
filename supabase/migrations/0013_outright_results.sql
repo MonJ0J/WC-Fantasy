@@ -64,9 +64,16 @@ language sql stable security definer set search_path = public as $$
     select away_team_id from matches where id in (101, 102) and away_team_id is not null
   ),
   -- ----- UNDERPERFORMER -----
+  -- The bet only resolves once EVERY R32 slot has a team (both home and away
+  -- on all 16 R32 matches = 32 teams known = group stage fully decided
+  -- including the 8 best 3rd-placed teams). Otherwise we'd incorrectly mark
+  -- a Pot 1/2 team as "underperformed" just because its R32 slot hasn't been
+  -- populated yet.
   ko_started as (
-    select exists (
-      select 1 from matches where stage = 'R32' and home_team_id is not null
+    select not exists (
+      select 1 from matches
+       where stage = 'R32'
+         and (home_team_id is null or away_team_id is null)
     ) as ready
   ),
   underperformers as (
