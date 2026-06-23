@@ -9,6 +9,7 @@ import type {
   MatchStatus,
   OutrightBetType,
   OutrightPrediction,
+  OutrightResult,
   Player,
   PredictionOutcome,
   PublicMatchPrediction,
@@ -424,4 +425,8 @@ export async function getMyOutrightsLockAt(
     p_player_id: playerId,
     p_group_id: groupId,
   });
+}
+
+export async function getOutrightResults(): Promise<OutrightResult[]> {
+  return rpc<OutrightResult[]>("get_outright_results", {});
 }

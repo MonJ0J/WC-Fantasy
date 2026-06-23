@@ -80,6 +80,13 @@ export interface OutrightPrediction {
   predicted_team_id: string;
 }
 
+export interface OutrightResult {
+  bet_type: OutrightBetType;
+  bet_subkey: string | null;
+  team_id: string | null;
+  resolved: boolean;
+}
+
 export interface PublicMatchPrediction extends MatchPrediction {
   player_id: string;
   group_id: string;
