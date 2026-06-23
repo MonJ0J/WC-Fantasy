@@ -7,6 +7,7 @@ import {
   getMyAwards,
   getMyOutrights,
   getMyOutrightsLockAt,
+  getOutrightResults,
   getTournamentPlayers,
   submitAwardPrediction,
   submitOutrightPrediction,
@@ -16,6 +17,7 @@ import type {
   AwardType,
   OutrightBetType,
   OutrightPrediction,
+  OutrightResult,
   Team,
   TournamentPlayer,
 } from "../lib/types";
@@ -34,6 +36,7 @@ export function Outrights() {
   const [picks, setPicks] = useState<OutrightPrediction[]>([]);
   const [candidates, setCandidates] = useState<TournamentPlayer[]>([]);
   const [awards, setAwards] = useState<AwardPrediction[]>([]);
+  const [results, setResults] = useState<OutrightResult[]>([]);
   const [lockAt, setLockAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<string | null>(null);
@@ -43,12 +46,13 @@ export function Outrights() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const [t, lock, mine, cands, myAwards] = await Promise.all([
+      const [t, lock, mine, cands, myAwards, res] = await Promise.all([
         getAllTeams(),
         getMyOutrightsLockAt(playerId, group.id).catch(() => null),
         getMyOutrights(playerId, group.id).catch(() => [] as OutrightPrediction[]),
         getTournamentPlayers().catch(() => [] as TournamentPlayer[]),
         getMyAwards(playerId, group.id).catch(() => [] as AwardPrediction[]),
+        getOutrightResults().catch(() => [] as OutrightResult[]),
       ]);
       if (cancelled) return;
       setTeams(t);
@@ -56,6 +60,7 @@ export function Outrights() {
       setPicks(mine);
       setCandidates(cands);
       setAwards(myAwards);
+      setResults(res);
       setLoading(false);
     })();
     return () => {
@@ -91,6 +96,53 @@ export function Outrights() {
         (p) => p.bet_type === betType && (p.bet_subkey ?? "") === (subkey ?? ""),
       )?.predicted_team_id ?? ""
     );
+  }
+
+  /**
+   * Returns the status of a player's outright pick relative to the actual
+   * tournament results:
+   *   - "pending" — outcome not yet determined OR no pick made
+   *   - "correct" — the picked team matches the resolved result
+   *   - "wrong"   — the picked team does NOT match the resolved result
+   */
+  function pickStatus(
+    betType: OutrightBetType,
+    subkey: string | null,
+    pickedTeamId: string,
+  ): "pending" | "correct" | "wrong" {
+    if (!pickedTeamId) return "pending";
+
+    if (betType === "SEMIFINALIST") {
+      // SF rows don't have a subkey; the SF set is resolved when results has
+      // any row for SEMIFINALIST. If it does, pickedTeam is correct iff one of
+      // those rows' team_id matches.
+      const sfRows = results.filter((r) => r.bet_type === "SEMIFINALIST");
+      if (sfRows.length === 0) return "pending";
+      return sfRows.some((r) => r.team_id === pickedTeamId) ? "correct" : "wrong";
+    }
+
+    if (betType === "UNDERPERFORMER") {
+      // Same model: UP rows only exist for teams that DID underperform.
+      // Resolved is conveyed by whether the underperformer evaluation ran at
+      // all — we infer that from ANY row tagged UNDERPERFORMER having
+      // resolved=true, OR by checking R32 being seeded server-side. Simpler:
+      // if any row exists, the eval ran.
+      const upRows = results.filter((r) => r.bet_type === "UNDERPERFORMER");
+      // If R32 hasn't started, the SQL emits 0 rows for UP — we can't
+      // distinguish "not yet ready" from "top seeds all advanced". Treat as
+      // pending until KO begins; once KO begins, no rows = nobody
+      // underperformed = pick is wrong.
+      const koStarted = results.some((r) => r.resolved && r.bet_type !== "CHAMPION" && r.bet_type !== "RUNNER_UP");
+      if (!koStarted) return "pending";
+      return upRows.some((r) => r.team_id === pickedTeamId) ? "correct" : "wrong";
+    }
+
+    // CHAMPION / RUNNER_UP / GROUP_WINNER all have a single row each
+    const row = results.find(
+      (r) => r.bet_type === betType && (r.bet_subkey ?? "") === (subkey ?? ""),
+    );
+    if (!row || !row.resolved) return "pending";
+    return row.team_id === pickedTeamId ? "correct" : "wrong";
   }
 
   async function save(
@@ -213,6 +265,7 @@ export function Outrights() {
           onChange={(v) => void save("CHAMPION", v)}
           teams={teams}
           disabled={locked || savingKey === pickKey("CHAMPION", null)}
+          status={pickStatus("CHAMPION", null, getPick("CHAMPION", null))}
         />
       </Section>
 
@@ -225,6 +278,7 @@ export function Outrights() {
           onChange={(v) => void save("RUNNER_UP", v)}
           teams={teams}
           disabled={locked || savingKey === pickKey("RUNNER_UP", null)}
+          status={pickStatus("RUNNER_UP", null, getPick("RUNNER_UP", null))}
         />
       </Section>
 
@@ -243,6 +297,7 @@ export function Outrights() {
                 onChange={(v) => void save("GROUP_WINNER", v, letter)}
                 teams={teamsByGroup.get(letter) ?? []}
                 disabled={locked || savingKey === pickKey("GROUP_WINNER", letter)}
+                status={pickStatus("GROUP_WINNER", letter, getPick("GROUP_WINNER", letter))}
               />
             </div>
           ))}
@@ -271,6 +326,7 @@ export function Outrights() {
                   onChange={(v) => void save("SEMIFINALIST", v, slot)}
                   teams={teams.filter((t) => !otherPicks.has(t.id))}
                   disabled={locked || savingKey === pickKey("SEMIFINALIST", slot)}
+                  status={pickStatus("SEMIFINALIST", slot, getPick("SEMIFINALIST", slot))}
                 />
               </div>
             );
@@ -287,6 +343,7 @@ export function Outrights() {
           onChange={(v) => void save("UNDERPERFORMER", v)}
           teams={pot12}
           disabled={locked || savingKey === pickKey("UNDERPERFORMER", null)}
+          status={pickStatus("UNDERPERFORMER", null, getPick("UNDERPERFORMER", null))}
         />
         <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
           Pot 1 = pre-draw seed 1 of each group · Pot 2 = seed 2. {pot12.length} teams eligible.
@@ -365,18 +422,28 @@ function TeamPicker({
   onChange,
   teams,
   disabled,
+  status = "pending",
 }: {
   value: string;
   onChange: (v: string) => void;
   teams: Team[];
   disabled: boolean;
+  status?: "pending" | "correct" | "wrong";
 }) {
+  const tint =
+    status === "correct"
+      ? "border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100"
+      : status === "wrong"
+        ? "border-red-400 bg-red-50 text-red-900 line-through opacity-90 dark:bg-red-500/15 dark:text-red-100"
+        : value
+          ? "border-brand-400 bg-brand-50 dark:bg-brand-500/15"
+          : "";
   return (
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
-      className={cx("input !py-2 !text-sm", value && "border-brand-400 bg-brand-50 dark:bg-brand-500/15")}
+      className={cx("input !py-2 !text-sm", tint)}
     >
       <option value="">— pick a team —</option>
       {teams
