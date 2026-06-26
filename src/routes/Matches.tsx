@@ -123,8 +123,15 @@ export function Matches() {
           return dayKey(m.kickoff_at) === today;
         case "upcoming":
           return kickoff > now && m.status !== "FINISHED";
-        case "live":
-          return m.status === "LIVE" || (kickoff <= now && m.status !== "FINISHED");
+        case "live": {
+          if (m.status === "LIVE") return true;
+          // Fallback: count as live only inside a narrow window after
+          // kickoff (status may lag the FIFA sync by a few minutes).
+          // Without this clamp, every past SCHEDULED match floods the tab.
+          if (m.status === "FINISHED") return false;
+          const minutesSinceKickoff = (now - kickoff) / 60_000;
+          return minutesSinceKickoff >= 0 && minutesSinceKickoff <= 150;
+        }
         case "finished":
           return m.status === "FINISHED";
         case "all":
