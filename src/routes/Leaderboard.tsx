@@ -72,7 +72,7 @@ export function Leaderboard() {
   return (
     <div className="space-y-2">
       <div className="card overflow-x-auto p-0">
-        <table className="w-full min-w-[520px] text-sm">
+        <table className="w-full min-w-[600px] text-sm">
           <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
             <tr>
               <th className="px-4 py-3">#</th>
@@ -82,15 +82,21 @@ export function Leaderboard() {
               </th>
               <th
                 className="px-2 py-3 text-right"
-                title="Correct outcomes (win/draw/loss)"
+                title="Group-stage matches where you picked the right outcome"
               >
-                Outcomes
+                Matches
               </th>
               <th
                 className="px-2 py-3 text-right"
-                title="Exact score matches"
+                title="Exact score matches (group + knockouts)"
               >
                 Exact
+              </th>
+              <th
+                className="px-2 py-3 text-right"
+                title="Correct outright bets (Champion, Runner-up, Group winners, Semifinalists, Underperformer)"
+              >
+                Outrights
               </th>
               <th
                 className="px-2 py-3 text-right"
@@ -100,9 +106,9 @@ export function Leaderboard() {
               </th>
               <th
                 className="px-2 py-3 pr-4 text-right"
-                title="Correct outright bets (Champion, Runner-up, Group winners, Semifinalists, Underperformer)"
+                title="All correct outcomes across group + knockout matches"
               >
-                Outrights
+                Outcomes
               </th>
             </tr>
           </thead>
@@ -126,16 +132,19 @@ export function Leaderboard() {
                     {r.total_points}
                   </td>
                   <td className="px-2 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
-                    {r.correct_outcomes}
+                    {Math.max(0, r.correct_outcomes - r.ko_correct)}
                   </td>
                   <td className="px-2 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
                     {r.exact_scores}
                   </td>
                   <td className="px-2 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
+                    {r.outright_correct}
+                  </td>
+                  <td className="px-2 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
                     {r.ko_correct}
                   </td>
                   <td className="px-2 py-3 pr-4 text-right tabular-nums text-slate-600 dark:text-slate-300">
-                    {r.outright_correct}
+                    {r.correct_outcomes}
                   </td>
                 </tr>
               );
