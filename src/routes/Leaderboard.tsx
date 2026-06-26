@@ -99,16 +99,10 @@ export function Leaderboard() {
                 Outrights
               </th>
               <th
-                className="px-2 py-3 text-right"
+                className="px-2 py-3 pr-4 text-right"
                 title="Correct knockout-round predictions (R32 → Final)"
               >
                 Knockouts
-              </th>
-              <th
-                className="px-2 py-3 pr-4 text-right"
-                title="All correct outcomes across group + knockout matches"
-              >
-                Outcomes
               </th>
             </tr>
           </thead>
@@ -140,11 +134,8 @@ export function Leaderboard() {
                   <td className="px-2 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
                     {r.outright_correct}
                   </td>
-                  <td className="px-2 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
-                    {r.ko_correct}
-                  </td>
                   <td className="px-2 py-3 pr-4 text-right tabular-nums text-slate-600 dark:text-slate-300">
-                    {r.correct_outcomes}
+                    {r.ko_correct}
                   </td>
                 </tr>
               );
