@@ -24,6 +24,8 @@ export interface Match {
   away_score: number | null;
   status: MatchStatus;
   bracket_slot: number | null;
+  /** True if the match was decided on penalties (KO only). */
+  went_to_penalties?: boolean;
 }
 
 export interface GroupSession {
@@ -60,6 +62,8 @@ export interface MatchPrediction {
   predicted_outcome: PredictionOutcome;
   predicted_home_score: number | null;
   predicted_away_score: number | null;
+  /** True if the player predicted the match will go to penalties (KO only). */
+  predicted_penalties?: boolean;
 }
 
 export interface BracketPrediction {

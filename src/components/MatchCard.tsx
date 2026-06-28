@@ -99,10 +99,17 @@ export function MatchCard({
                 ? `${awayLabel} win`
                 : "Draw"}
           </span>
-          {existing.predicted_home_score != null && existing.predicted_away_score != null && (
-            <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-              {existing.predicted_home_score}–{existing.predicted_away_score}
+          {existing.predicted_penalties ? (
+            <span className="rounded-md bg-amber-100 px-2 py-0.5 font-semibold text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
+              via PKs
             </span>
+          ) : (
+            existing.predicted_home_score != null &&
+            existing.predicted_away_score != null && (
+              <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                {existing.predicted_home_score}–{existing.predicted_away_score}
+              </span>
+            )
           )}
           {myPoints != null && (
             <span

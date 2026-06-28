@@ -91,6 +91,14 @@ export function Matches() {
     };
   }, []);
 
+  // Group stage is done — when the user switches to Upcoming, auto-narrow
+  // to knockout matches (and hide the group-letter filter below).
+  useEffect(() => {
+    if (filter === "upcoming" && stageFilter === "GROUP") {
+      setStageFilter("KO");
+    }
+  }, [filter, stageFilter]);
+
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const predByMatch = useMemo(
     () => new Map(predictions.map((p) => [p.match_id, p])),
@@ -225,19 +233,23 @@ export function Matches() {
             {s === "GROUP" ? "Group" : s === "KO" ? "Knockout" : "Both"}
           </button>
         ))}
-        <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">Group</span>
-        <select
-          value={groupFilter}
-          onChange={(e) => setGroupFilter(e.target.value)}
-          className="rounded-md border border-slate-300 dark:border-slate-700 bg-white px-2 py-1 text-xs dark:bg-slate-800 dark:text-slate-100"
-        >
-          <option value="ALL">All</option>
-          {groupLetters.map((g) => (
-            <option key={g} value={g}>
-              Group {g}
-            </option>
-          ))}
-        </select>
+        {filter !== "upcoming" && (
+          <>
+            <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">Group</span>
+            <select
+              value={groupFilter}
+              onChange={(e) => setGroupFilter(e.target.value)}
+              className="rounded-md border border-slate-300 dark:border-slate-700 bg-white px-2 py-1 text-xs dark:bg-slate-800 dark:text-slate-100"
+            >
+              <option value="ALL">All</option>
+              {groupLetters.map((g) => (
+                <option key={g} value={g}>
+                  Group {g}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
       </div>
 
       {grouped.length === 0 ? (

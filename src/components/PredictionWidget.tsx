@@ -42,6 +42,9 @@ export function PredictionWidget({
   const [away, setAway] = useState<string>(
     existing?.predicted_away_score?.toString() ?? "",
   );
+  const [penalties, setPenalties] = useState<boolean>(
+    existing?.predicted_penalties ?? false,
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -50,7 +53,13 @@ export function PredictionWidget({
     setOutcome(existing?.predicted_outcome ?? null);
     setHome(existing?.predicted_home_score?.toString() ?? "");
     setAway(existing?.predicted_away_score?.toString() ?? "");
-  }, [existing?.predicted_outcome, existing?.predicted_home_score, existing?.predicted_away_score]);
+    setPenalties(existing?.predicted_penalties ?? false);
+  }, [
+    existing?.predicted_outcome,
+    existing?.predicted_home_score,
+    existing?.predicted_away_score,
+    existing?.predicted_penalties,
+  ]);
 
   const locked = isLocked(match.kickoff_at) || isStarted(match.kickoff_at);
 
@@ -89,11 +98,14 @@ export function PredictionWidget({
     setAway("");
   }
 
-  async function save(nextOutcome: PredictionOutcome | null) {
+  async function save(nextOutcome: PredictionOutcome | null, nextPenalties?: boolean) {
     if (locked) return;
 
-    const h = home === "" ? null : Number(home);
-    const a = away === "" ? null : Number(away);
+    const usePenalties = nextPenalties ?? penalties;
+
+    // When predicting penalties, scores are not submitted.
+    const h = usePenalties ? null : home === "" ? null : Number(home);
+    const a = usePenalties ? null : away === "" ? null : Number(away);
     if (
       (h != null && (Number.isNaN(h) || h < 0 || h > 20)) ||
       (a != null && (Number.isNaN(a) || a < 0 || a > 20))
@@ -106,7 +118,10 @@ export function PredictionWidget({
     // match. For KO matches, a tied score keeps the user-selected outcome
     // (HOME/AWAY = the PK winner) since draws aren't allowed there.
     let chosen: PredictionOutcome | null;
-    if (h != null && a != null) {
+    if (usePenalties) {
+      // Penalties bet: user must pick a winner explicitly (HOME or AWAY).
+      chosen = nextOutcome ?? outcome;
+    } else if (h != null && a != null) {
       if (h > a) chosen = "HOME";
       else if (h < a) chosen = "AWAY";
       else if (ko) chosen = nextOutcome ?? outcome;
@@ -129,12 +144,14 @@ export function PredictionWidget({
         outcome: chosen,
         homeScore: h,
         awayScore: a,
+        predictedPenalties: usePenalties,
       });
       onSaved({
         match_id: match.id,
         predicted_outcome: chosen,
         predicted_home_score: h,
         predicted_away_score: a,
+        predicted_penalties: usePenalties,
       });
       setSavedAt(Date.now());
     } catch (e) {
@@ -183,9 +200,19 @@ export function PredictionWidget({
 
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm">
-          <ScoreInput value={home} onChange={setHome} ariaLabel={`${homeName} score`} />
+          <ScoreInput
+            value={penalties ? "" : home}
+            onChange={setHome}
+            ariaLabel={`${homeName} score`}
+            disabled={penalties}
+          />
           <span className="text-slate-400">–</span>
-          <ScoreInput value={away} onChange={setAway} ariaLabel={`${awayName} score`} />
+          <ScoreInput
+            value={penalties ? "" : away}
+            onChange={setAway}
+            ariaLabel={`${awayName} score`}
+            disabled={penalties}
+          />
           <button
             type="button"
             onClick={() => void save(null)}
@@ -194,7 +221,7 @@ export function PredictionWidget({
           >
             {saving ? <Spinner className="h-4 w-4" /> : "Save score"}
           </button>
-          {(home !== "" || away !== "") && (
+          {!penalties && (home !== "" || away !== "") && (
             <button
               type="button"
               onClick={clearScores}
@@ -210,6 +237,32 @@ export function PredictionWidget({
           <span className="text-xs text-emerald-600">Saved ✓</span>
         )}
       </div>
+
+      {ko && (
+        <label className="flex cursor-pointer select-none items-center gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-100 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:bg-slate-800">
+          <input
+            type="checkbox"
+            checked={penalties}
+            disabled={saving}
+            onChange={(e) => {
+              const next = e.target.checked;
+              setPenalties(next);
+              if (next) {
+                setHome("");
+                setAway("");
+              }
+              if (outcome) void save(outcome, next);
+            }}
+            className="h-4 w-4 rounded border-slate-400 text-brand-600 focus:ring-brand-500"
+          />
+          <span>
+            Goes to penalties
+            <span className="ml-1 text-slate-500 dark:text-slate-400">
+              (no exact score; +{STAGE_EXACT_BONUS[match.stage]} bonus if you nailed it)
+            </span>
+          </span>
+        </label>
+      )}
 
       {error && <p className="text-xs text-red-600">{error}</p>}
       <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -228,10 +281,12 @@ function ScoreInput({
   value,
   onChange,
   ariaLabel,
+  disabled,
 }: {
   value: string;
   onChange: (v: string) => void;
   ariaLabel: string;
+  disabled?: boolean;
 }) {
   return (
     <input
@@ -240,11 +295,12 @@ function ScoreInput({
       pattern="[0-9]*"
       maxLength={2}
       value={value}
+      disabled={disabled}
       onChange={(e) => {
         const v = e.target.value.replace(/[^0-9]/g, "").slice(0, 2);
         onChange(v);
       }}
-      className="h-9 w-12 rounded-lg border border-slate-300 dark:border-slate-700 bg-white text-center text-base font-semibold focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 dark:bg-slate-800 dark:text-slate-100"
+      className="h-9 w-12 rounded-lg border border-slate-300 dark:border-slate-700 bg-white text-center text-base font-semibold focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 dark:bg-slate-800 dark:text-slate-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 dark:disabled:bg-slate-900 dark:disabled:text-slate-600"
     />
   );
 }

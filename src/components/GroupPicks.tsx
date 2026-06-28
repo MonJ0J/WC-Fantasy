@@ -80,10 +80,15 @@ export function GroupPicks({
             const exactScore =
               actual != null &&
               correctOutcome &&
+              p.predicted_penalties !== true &&
               p.predicted_home_score != null &&
               p.predicted_away_score != null &&
               p.predicted_home_score === match.home_score &&
               p.predicted_away_score === match.away_score;
+            const calledPks =
+              correctOutcome &&
+              p.predicted_penalties === true &&
+              match.went_to_penalties === true;
             const earned =
               match.status === "FINISHED" ? scorePrediction(match, p) : null;
             return (
@@ -113,17 +118,32 @@ export function GroupPicks({
                     awayName={awayName}
                     correct={correctOutcome}
                   />
-                  {p.predicted_home_score != null && p.predicted_away_score != null && (
+                  {p.predicted_penalties ? (
                     <span
                       className={cx(
-                        "rounded-md px-1.5 py-0.5 font-mono tabular-nums text-[11px]",
-                        exactScore
+                        "rounded-md px-1.5 py-0.5 font-semibold tabular-nums text-[11px]",
+                        calledPks
                           ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300"
-                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
+                          : "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300",
                       )}
+                      title="Predicted: goes to penalties"
                     >
-                      {p.predicted_home_score}–{p.predicted_away_score}
+                      PKs
                     </span>
+                  ) : (
+                    p.predicted_home_score != null &&
+                    p.predicted_away_score != null && (
+                      <span
+                        className={cx(
+                          "rounded-md px-1.5 py-0.5 font-mono tabular-nums text-[11px]",
+                          exactScore
+                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300"
+                            : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
+                        )}
+                      >
+                        {p.predicted_home_score}–{p.predicted_away_score}
+                      </span>
+                    )
                   )}
                 </span>
                 {earned != null && (
