@@ -66,13 +66,21 @@ export function scorePrediction(match: Match, pred: MatchPrediction | undefined)
 
   let pts = 0;
   if (pred.predicted_outcome === actual) pts += STAGE_OUTCOME_POINTS[match.stage];
-  if (
+
+  // Exact-score bonus: either the regulation scores match, OR the player
+  // called "goes to PKs" and the match did go to PKs (with correct winner).
+  const calledPksCorrectly =
+    pred.predicted_penalties === true &&
+    match.went_to_penalties === true &&
+    pred.predicted_outcome === actual;
+  const exactScoreMatches =
+    pred.predicted_penalties !== true &&
     pred.predicted_outcome === actual &&
     pred.predicted_home_score != null &&
     pred.predicted_away_score != null &&
     pred.predicted_home_score === match.home_score &&
-    pred.predicted_away_score === match.away_score
-  ) {
+    pred.predicted_away_score === match.away_score;
+  if (calledPksCorrectly || exactScoreMatches) {
     pts += STAGE_EXACT_BONUS[match.stage];
   }
   return pts;

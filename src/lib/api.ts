@@ -223,6 +223,7 @@ export async function submitMatchPrediction(args: {
   outcome: PredictionOutcome;
   homeScore?: number | null;
   awayScore?: number | null;
+  predictedPenalties?: boolean;
 }): Promise<void> {
   await rpc<void>("submit_match_prediction", {
     p_player_id: args.playerId,
@@ -231,6 +232,7 @@ export async function submitMatchPrediction(args: {
     p_outcome: args.outcome,
     p_home_score: args.homeScore ?? null,
     p_away_score: args.awayScore ?? null,
+    p_predicted_penalties: args.predictedPenalties ?? false,
   });
 }
 

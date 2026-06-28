@@ -137,6 +137,14 @@ Deno.serve(async (req: Request) => {
         else if (m.score.winner === "AWAY_TEAM") winnerTeamId = awayTla;
       }
 
+      // football-data.org sets `score.duration` to "PENALTY_SHOOTOUT" when
+      // a KO match was decided on PKs. We mirror that into matches.went_to_penalties
+      // so the leaderboard can award the "called PKs" bonus.
+      const wentToPenalties =
+        stage !== "GROUP" && status === "FINISHED"
+          ? m.score?.duration === "PENALTY_SHOOTOUT"
+          : null;
+
       // Resolve our fifa_id (1..104).
       const { data: ourId, error: resolveErr } = await supabase.rpc("resolve_match_id", {
         p_external_id: m.id,
@@ -165,6 +173,7 @@ Deno.serve(async (req: Request) => {
         p_winner_team_id: winnerTeamId,
         p_status: status,
         p_kickoff_at: m.utcDate,
+        p_went_to_penalties: wentToPenalties,
       });
       if (upsertErr) {
         console.error(`upsert ${ourId}:`, upsertErr.message);
