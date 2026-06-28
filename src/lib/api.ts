@@ -312,12 +312,22 @@ export async function deleteAwardPrediction(args: {
 }
 
 export async function getPublicPredictions(groupId: string): Promise<PublicMatchPrediction[]> {
-  const { data, error } = await supabase
-    .from("match_predictions_public")
-    .select("*")
-    .eq("group_id", groupId);
-  if (error) throw new Error(error.message);
-  return (data ?? []) as PublicMatchPrediction[];
+  // PostgREST caps each response at 1000 rows. With ~18 players × 72 group
+  // matches we'd hit the cap and silently drop picks, so page through.
+  const pageSize = 1000;
+  const all: PublicMatchPrediction[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("match_predictions_public")
+      .select("*")
+      .eq("group_id", groupId)
+      .range(from, from + pageSize - 1);
+    if (error) throw new Error(error.message);
+    const rows = (data ?? []) as PublicMatchPrediction[];
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return all;
 }
 
 // ---------- Leaderboard ----------
