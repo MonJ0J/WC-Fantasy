@@ -42,7 +42,7 @@ export function Matches() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>("today");
   const [groupFilter, setGroupFilter] = useState<string>("ALL");
-  const [stageFilter, setStageFilter] = useState<"ALL" | "GROUP" | "KO">("GROUP");
+  const [stageFilter, setStageFilter] = useState<"ALL" | "GROUP" | "KO">("KO");
   const [autoFillOpen, setAutoFillOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
 
@@ -219,7 +219,7 @@ export function Matches() {
 
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-slate-500 dark:text-slate-400">Stage</span>
-        {(["GROUP", "KO", "ALL"] as const).map((s) => (
+        {(["KO", "ALL"] as const).map((s) => (
           <button
             key={s}
             onClick={() => setStageFilter(s)}
@@ -230,7 +230,7 @@ export function Matches() {
                 : "bg-slate-100 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700",
             )}
           >
-            {s === "GROUP" ? "Group" : s === "KO" ? "Knockout" : "Both"}
+            {s === "KO" ? "Knockout" : "All matches"}
           </button>
         ))}
         {filter !== "upcoming" && (
