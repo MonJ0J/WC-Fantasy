@@ -258,7 +258,7 @@ export function PredictionWidget({
           <span>
             Goes to penalties
             <span className="ml-1 text-slate-500 dark:text-slate-400">
-              (no exact score; +{STAGE_OUTCOME_POINTS[match.stage]} pts if it goes to PKs, even
+              (no exact score; +{STAGE_EXACT_BONUS[match.stage]} bonus if it goes to PKs, even
               if you miss the winner)
             </span>
           </span>
