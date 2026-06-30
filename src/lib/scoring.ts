@@ -67,12 +67,18 @@ export function scorePrediction(match: Match, pred: MatchPrediction | undefined)
   let pts = 0;
   if (pred.predicted_outcome === actual) pts += STAGE_OUTCOME_POINTS[match.stage];
 
-  // Exact-score bonus: either the regulation scores match, OR the player
-  // called "goes to PKs" and the match did go to PKs (with correct winner).
-  const calledPksCorrectly =
-    pred.predicted_penalties === true &&
-    match.went_to_penalties === true &&
-    pred.predicted_outcome === actual;
+  // PK-call bonus: predicting "goes to penalties" correctly awards a flat
+  // bonus equal to the stage's outcome points, INDEPENDENT of whether the
+  // player also picked the winning side. Only applies to knockout matches
+  // that actually went to PKs.
+  const calledPks =
+    pred.predicted_penalties === true && match.went_to_penalties === true;
+  if (calledPks) {
+    pts += STAGE_OUTCOME_POINTS[match.stage];
+  }
+
+  // Exact-score bonus: only available when the player did NOT call PKs, the
+  // outcome is correct, and the regulation score matches exactly.
   const exactScoreMatches =
     pred.predicted_penalties !== true &&
     pred.predicted_outcome === actual &&
@@ -80,7 +86,7 @@ export function scorePrediction(match: Match, pred: MatchPrediction | undefined)
     pred.predicted_away_score != null &&
     pred.predicted_home_score === match.home_score &&
     pred.predicted_away_score === match.away_score;
-  if (calledPksCorrectly || exactScoreMatches) {
+  if (exactScoreMatches) {
     pts += STAGE_EXACT_BONUS[match.stage];
   }
   return pts;
