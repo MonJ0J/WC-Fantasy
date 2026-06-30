@@ -39,6 +39,11 @@ export function HowToPlay() {
           <span className="font-semibold text-emerald-700 dark:text-emerald-400">+bonus</span> extra if your exact score also
           matches. Knockout draws aren't a thing — pick a winner.
         </p>
+        <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+          <span className="font-semibold text-amber-700 dark:text-amber-400">⚽ Goes to penalties:</span> on
+          a knockout match, tick the box and we pay you the full <span className="font-semibold">+outcome</span> bonus
+          if the match actually goes to PKs — even if you miss the winner. Pick the right winner too and you stack both.
+        </p>
       </Section>
 
       {/* Outright bets */}
